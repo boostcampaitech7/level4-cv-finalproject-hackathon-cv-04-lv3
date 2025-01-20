@@ -1,0 +1,33 @@
+name: "♻️ Refactoring"
+description: "코드 리팩토링 작업"
+labels: ["refactoring"]
+body:
+  - type: textarea
+    attributes:
+      label: 💻 리팩토링 대상
+      description: 리팩토링하려는 코드나 모듈을 명확히 설명해 주세요.
+      placeholder: 리팩토링할 코드 영역을 구체적으로 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 🎯 리팩토링 목적
+      description: 리팩토링을 통해 달성하려는 목표(가독성, 성능 향상 등)를 적어주세요.
+      placeholder: 구체적인 이유를 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📚 참고 자료
+      description: 참고할 문서나 코드 리뷰 링크가 있다면 작성해 주세요.
+  - type: textarea
+    attributes:
+      label: 📅 예상 기간
+      description: 리팩토링 작업이 완료될 예상 기간을 작성해 주세요.
+      placeholder: YYYY-MM-DD ~ YYYY-MM-DD 형식으로 작성해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📝 기타
+      description: 추가로 필요한 정보가 있다면 적어주세요.

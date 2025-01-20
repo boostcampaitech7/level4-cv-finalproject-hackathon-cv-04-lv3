@@ -1,0 +1,22 @@
+name: "🐛 Bug Report"
+description: "발생한 버그에 대한 리포트"
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: 🐞 버그 설명
+      description: 발생한 버그의 증상을 명확히 설명해 주세요.
+      placeholder: 버그가 발생한 상황과 증상(스크린샷)을 구체적으로 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 🧰 디버깅 방법
+      description: 앞으로 어떻게 디버깅할지 계획을 적어주세요.
+      placeholder: 예시) 추가적인 데이터 분석을 통해 문제를 파악하거나, 특정 모듈의 코드를 수정 등 방법을 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📝 기타
+      description: 기타 도움이 될 만한 정보를 작성해 주세요.

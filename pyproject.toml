@@ -6,9 +6,12 @@ authors = [
     {name = "Seyeon Kim",email = "ksyrobot@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9,<4.0"
 dependencies = [
-    "requests (>=2.32.3,<3.0.0)"
+    "requests (>=2.32.3,<3.0.0)",
+    "langchain-upstage (>=0.6.0,<0.7.0)",
+    "langchain-core (>=0.3.30,<0.4.0)",
+    "python-dotenv (>=1.0.1,<2.0.0)"
 ]
 
 

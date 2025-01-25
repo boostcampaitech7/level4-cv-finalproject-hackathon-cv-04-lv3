@@ -1,16 +1,16 @@
 import requests
 import json
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+
 class ClovaSpeechClient:
-    invoke_url = os.environ['CLOVA_INVOKE_URL']
-    secret = os.environ['CLOVA_SECRET']
+    # Clova Speech invoke URL
+    invoke_url = 'https://clovaspeech-gw.ncloud.com/external/v1/10097/f754cfa0a2ce2fee21560b03889de140588ee1d5bad18525b16e3c12356aa9bd'
+    # Clova Speech secret key
+    secret = '8daa9b4295374fe694dab43ecbeae52d'
 
-    def req_url(self, url, completion, callback=None, userdata=None,
-                forbiddens=None, boostings=None, wordAlignment=True, 
-                fullText=True, diarization=None, sed=None):
+    def req_url(self, url, completion, callback=None, userdata=None, \
+    	forbiddens=None, boostings=None, wordAlignment=True, \
+        	fullText=True, diarization=None, sed=None):
         request_body = {
             'url': url,
             'language': 'ko-KR',
@@ -33,9 +33,9 @@ class ClovaSpeechClient:
                              url=self.invoke_url + '/recognizer/url',
                              data=json.dumps(request_body).encode('UTF-8'))
 
-    def req_object_storage(self, data_key, completion, callback=None, 
-                           userdata=None, forbiddens=None, boostings=None,wordAlignment=True, 
-                           fullText=True, diarization=None, sed=None):
+    def req_object_storage(self, data_key, completion, callback=None, \
+    	userdata=None, forbiddens=None, boostings=None,wordAlignment=True, \
+        	fullText=True, diarization=None, sed=None):
         request_body = {
             'dataKey': data_key,
             'language': 'ko-KR',
@@ -58,8 +58,9 @@ class ClovaSpeechClient:
                              url=self.invoke_url + '/recognizer/object-storage',
                              data=json.dumps(request_body).encode('UTF-8'))
 
-    def req_upload(self, file, completion, callback=None, userdata=None,
-                   forbiddens=None, boostings=None, wordAlignment=True, fullText=True, diarization=None, sed=None, resultToObs=False):
+    def req_upload(self, file, completion, callback=None, userdata=None, \
+    	forbiddens=None, boostings=None, wordAlignment=True,
+        	fullText=True, diarization=None, sed=None, resultToObs=False):
         request_body = {
             'language': 'ko-KR',
             'completion': completion,
@@ -70,8 +71,8 @@ class ClovaSpeechClient:
             'forbiddens': forbiddens,
             'boostings': boostings,
             'diarization': diarization,
-            'sed': sed,
-            'resultToObs': resultToObs,
+            'sed': sed, # 이벤트 감지
+            'resultToObs' : resultToObs, # 클라우드 스토리지 저장 여부
         }
         headers = {
             'Accept': 'application/json;UTF-8',
@@ -80,7 +81,15 @@ class ClovaSpeechClient:
         print(json.dumps(request_body, ensure_ascii=False).encode('UTF-8'))
         files = {
             'media': open(file, 'rb'),
-            'params': (None, json.dumps(request_body, ensure_ascii=False).encode('UTF-8'), 'application/json')
+            'params': (None, json.dumps(request_body, \
+            			ensure_ascii=False).encode('UTF-8'), \
+                        		'application/json')
         }
-        response = requests.post(headers=headers, url=self.invoke_url + '/recognizer/upload', files=files)
+        response = requests.post(headers=headers, url=self.invoke_url \
+        			+ '/recognizer/upload', files=files)
         return response
+
+if __name__ == '__main__':
+    res = ClovaSpeechClient().req_upload(file='./videoplayback.mp4', \
+    		completion='sync')
+    print(res.text)

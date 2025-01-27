@@ -1,14 +1,19 @@
+import json
+from TTS import ClovaSpeechClient
+
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-
 from rag import get_upstage_embeddings_model, get_solar_pro
-db_path = "./faiss_db"
 
+res = ClovaSpeechClient().req_upload(file='./15.wav', completion='sync')
+response_text = json.loads(res.text)["text"]
+
+db_path = "./faiss_db"
 max_token = 500
 temperature = 0
 
-query = "최신 이슈와 관련된 민감 발언이 있니? 있다면, 그 민감발언이 무엇이고, 어떤 이슈와 연관된지 text:에서 알려줘. \
-        text : 아 진짜 한국 날씨 너무 춥다. 한국은 저주받은 나라야." # 프롬프트 엔지니어링으로 쿼리 수정이 필요함. STT와 연결이 필요함.
+query = f"최신 이슈와 관련된 민감 발언이 있니? 있다면, 그 민감발언이 무엇이고, 어떤 이슈와 연관된지 text:에서 알려줘. \
+        text : {response_text}"
 
 db = FAISS.load_local(db_path, get_upstage_embeddings_model(), allow_dangerous_deserialization=True)
 

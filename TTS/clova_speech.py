@@ -1,6 +1,9 @@
 import requests
 import json
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class ClovaSpeechClient:
     invoke_url = os.environ['CLOVA_INVOKE_URL']

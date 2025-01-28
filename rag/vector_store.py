@@ -25,13 +25,15 @@ def add_data(db_path, docs, embedding_model):
 def extract_rss_content(link):
    parse_rss = feedparser.parse(link)
 
-   articles = []
+   documents = []
 
    for entry in parse_rss.entries:
-      article = {
-         'published': entry.get('published', ''),
-         'content': entry.get('content', [{}])[0].get('value', ''),
-         'link': entry.get('link', '')
-      }
-      articles.append(article)
-   return articles
+      document = Document(
+         page_content=entry.get('content', [{}])[0].get('value', ''),
+         metadata={
+               'published': entry.get('published', ''),
+               'link': entry.get('link', '')
+         }
+      )
+      documents.append(document)
+   return documents

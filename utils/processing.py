@@ -1,5 +1,6 @@
 import re
 import numpy as np
+from langchain.schema import Document
 
 def extract_curse_words(text):
     pattern = r'\[(\d+),\s*(\d+),\s*\'([^\']+)\',\s*\'([^\']+)\'\]'
@@ -11,6 +12,22 @@ def extract_curse_words(text):
         curse_words.append([int(start), int(end), word, category])
     
     return curse_words
+
+# Clova Speech api에서 받은 결과를 원하는 입력 형태로 전처리 & 500 토큰씩 나눠서 반환
+def preprocess_speech_data(speech_data):
+    segments = speech_data["segments"]
+    input_text = ""
+
+    for segment in segments:
+        start = segment["start"]
+        end = segment["end"]
+        text = segment["text"]
+        input_text += f"[{start}, {end}, '{text}']\n"
+
+    input_text = input_text[:-2] # 마지막 줄바꿈 제거
+
+    documents = [Document(page_content=input_text)]
+    return documents
 
 def merge_segments(segments):
     if not segments:

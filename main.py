@@ -1,46 +1,62 @@
-import os
-import json
-from dotenv import load_dotenv
-from TTS import ClovaSpeechClient
-from langchain_core.prompts.few_shot import FewShotPromptTemplate
-from langchain_core.prompts.prompt import PromptTemplate
-from langchain_upstage import ChatUpstage
-from preprocessing import preprocess_speech_data
-from prompt import one
+from STT import ClovaSpeechClient
+from langchain_community.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-from utils import extract_curse_words, merge_segments
+from prompts import one
+from rag import get_upstage_embeddings_model, calculate_token
+# from preprocessing import preprocess_speech_data
+from utils import extract_curse_words, merge_segments, preprocess_speech_data, get_solar_pro
 
-import sys
-sys.path.append('submodules/CosyVoice/third_party/Matcha-TTS')
 # from submodules.cosyvoice.cli.cosyvoice import CosyVoice, CosyVoice2
 # from submodules.cosyvoice.utils.file_utils import load_wav
 # import torchaudio
 
-import subprocess
-
-load_dotenv()
-
-invoke_url = os.environ['CLOVA_INVOKE_URL']
-secret = os.environ['CLOVA_SECRET']
-upstage_api = os.environ['Upstage_API']
+import sys
+sys.path.append('submodules/CosyVoice/third_party/Matcha-TTS')
 
 media = './sample.mp4'
+db_path = "./faiss_db"
+max_token = 3000
+temperature = 0.0
+
+db = FAISS.load_local(db_path, get_upstage_embeddings_model(), allow_dangerous_deserialization=True)
+
 res = ClovaSpeechClient().req_upload(file=media, completion='sync')
 res = res.json()
 
 input_docs = preprocess_speech_data(res)
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=0,
+    length_function=calculate_token,
+    separators=['\n']
+    )
+
+input_docs = text_splitter.split_documents(input_docs)
+    
 for doc in input_docs:
     input_text = doc.page_content
     context = "1. 최근 정치 이슈 : 탄핵 2. 최근 정치 이슈 : 불법선거" # rag에서 받아온 유사 문서들을 context에 저장해야 함 ex) 1. {rag1}\n2. {rag2}\n3. {rag3}
     prompt = one(context, input_text)
+    qa = RetrievalQA.from_chain_type(llm=get_solar_pro(max_token, temperature),
+                                 chain_type="stuff",
+                                 retriever=db.as_retriever( # FAISS를 단순히 Vector DB가 아니라 retriever로 사용
+                                    search_type="mmr",
+                                    search_kwargs={'k':3, 'fetch_k' : 10, 'lambda_mult' : 0.5}),
+                                    # lambda_mult : 0에 가까울수록 다양성 중시, 1에 가까울수록 관련성 중시
+                                    # fetch_k : 관련성이 높은 문서를 몇 개 가져올지 결정
+                                    # k : 최종 결과로 몇 개의 문서를 가져올지 결정            
+                                 return_source_documents=True) # True로 설정하면, llm이 참조한 문서를 함께 반환
 
-    chat = ChatUpstage(api_key=upstage_api, model="solar-pro", max_tokens=3000, temperature=0.0)
-
-    llm_response = chat.invoke(prompt)
+    llm_response = qa.invoke(prompt)
     print("Solar Pro input :")
     print(prompt)
     print("Solar Pro output : ")
-    print(llm_response.content)
+    #print(llm_response.content)
+    print(llm_response)
+    print(llm_response['result'])
 
 # print("\n추출된 욕설 리스트:")
 # curse_words = extract_curse_words(llm_response.content)

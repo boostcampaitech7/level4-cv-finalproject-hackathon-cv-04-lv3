@@ -1,9 +1,12 @@
 from langchain_core.prompts.few_shot import FewShotPromptTemplate
 from langchain_core.prompts.prompt import PromptTemplate
+from pathlib import Path
 
 def one(context, input_text):
+    current_dir = Path(__file__).parent
+    template_path = current_dir / "test1.md"
 
-    with open("prompts/test1.md", "r", encoding="utf-8") as file:
+    with open(template_path, "r", encoding="utf-8") as file:
         template = file.read().format(context=context)
 
     examples = [

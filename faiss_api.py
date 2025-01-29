@@ -5,15 +5,18 @@ from langchain_community.vectorstores import FAISS
 from typing import List, Optional
 from rag import get_upstage_embeddings_model
 import uvicorn
+from langchain_core.documents import Document
+import logging
+import traceback
+# from database import NewsDocument
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 embeddings = get_upstage_embeddings_model()
 
 db_path = "./faiss_db"
-
-class Document(BaseModel):
-    page_content: str
-    metadata: Optional[dict] = None
 
 @app.post("/add_news")
 async def add_news_documents(documents: List[Document]):
@@ -28,6 +31,8 @@ async def add_news_documents(documents: List[Document]):
             vector_store.save_local(db_path) 
             return {"status": "success", "message": "Documents added to existing DB successfully"}
     except Exception as e:
+        logger.error(f"Error occurred: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

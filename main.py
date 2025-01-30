@@ -7,6 +7,7 @@ from prompts import one
 from rag import get_upstage_embeddings_model, calculate_token
 # from preprocessing import preprocess_speech_data
 from utils import extract_curse_words, merge_segments, preprocess_speech_data, get_solar_pro
+from database import FAISSClient
 
 # from submodules.cosyvoice.cli.cosyvoice import CosyVoice, CosyVoice2
 # from submodules.cosyvoice.utils.file_utils import load_wav
@@ -20,7 +21,7 @@ db_path = "./faiss_db"
 max_token = 3000
 temperature = 0.0
 
-db = FAISS.load_local(db_path, get_upstage_embeddings_model(), allow_dangerous_deserialization=True)
+client = FAISSClient()
 
 res = ClovaSpeechClient().req_upload(file=media, completion='sync')
 res = res.json()
@@ -38,19 +39,36 @@ input_docs = text_splitter.split_documents(input_docs)
     
 for doc in input_docs:
     input_text = doc.page_content
-    context = "1. 최근 정치 이슈 : 탄핵 2. 최근 정치 이슈 : 불법선거" # rag에서 받아온 유사 문서들을 context에 저장해야 함 ex) 1. {rag1}\n2. {rag2}\n3. {rag3}
+    context = "1. 최근 정치 이슈 : 탄핵 2. 최근 정치 이슈 : 불법선거" # rag에서 받아온 유사 문서들을 context에 저장해야 함 ex) 1. {rag1}\n2. {rag2}\n3. {rag3}    
     prompt = one(context, input_text)
-    qa = RetrievalQA.from_chain_type(llm=get_solar_pro(max_token, temperature),
-                                 chain_type="stuff",
-                                 retriever=db.as_retriever( # FAISS를 단순히 Vector DB가 아니라 retriever로 사용
-                                    search_type="mmr",
-                                    search_kwargs={'k':3, 'fetch_k' : 10, 'lambda_mult' : 0.5}),
-                                    # lambda_mult : 0에 가까울수록 다양성 중시, 1에 가까울수록 관련성 중시
-                                    # fetch_k : 관련성이 높은 문서를 몇 개 가져올지 결정
-                                    # k : 최종 결과로 몇 개의 문서를 가져올지 결정            
-                                 return_source_documents=True) # True로 설정하면, llm이 참조한 문서를 함께 반환
 
-    llm_response = qa.invoke(prompt)
+    # llm_response = client.rag_similarity(
+    #     query=prompt, 
+    #     k=4,
+    #     max_token=max_token,
+    #     temperature=temperature,
+    #     chain_type= "stuff"
+    # )
+
+    llm_response = client.rag_mmr(
+        query=prompt, 
+        k=4,
+        fetch_k = 11,
+        max_token=max_token,
+        temperature=temperature,
+        lambda_mult=0.5,
+        chain_type= "stuff"
+    )
+
+    # llm_response = client.rag_similarity_threshold(
+    #     query=prompt, 
+    #     k=4,
+    #     max_token=max_token,
+    #     temperature=temperature,
+    #     chain_type= "stuff",
+    #     score_threshold = 0.7
+    # )
+
     print("Solar Pro input :")
     print(prompt)
     print("Solar Pro output : ")

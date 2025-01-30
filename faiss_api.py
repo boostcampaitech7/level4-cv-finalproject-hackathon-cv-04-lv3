@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from langchain_community.vectorstores import FAISS
 from typing import List, Optional
 from rag import get_upstage_embeddings_model
-from crud import create_db, update_db
+from database import create_db, update_db
 import uvicorn
 from langchain_core.documents import Document
 from langchain.chains import RetrievalQA

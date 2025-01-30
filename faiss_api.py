@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from langchain_community.vectorstores import FAISS
 from typing import List, Optional
 from rag import get_upstage_embeddings_model
+from crud import create_db, update_db
 import uvicorn
 from langchain_core.documents import Document
 import logging
@@ -22,13 +23,10 @@ db_path = "./faiss_db"
 async def add_news_documents(documents: List[Document]):
     try:
         if not os.path.exists(db_path):
-            db = FAISS.from_documents(documents=documents, embedding=embeddings)
-            db.save_local(db_path)
+            create_db(db_path, documents, category="News")
             return {"status": "success", "message": "New DB created and documents added successfully"}
         else:
-            vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
-            vector_store.add_documents(documents=documents)
-            vector_store.save_local(db_path) 
+            update_db(db_path, documents, category="News")
             return {"status": "success", "message": "Documents added to existing DB successfully"}
     except Exception as e:
         logger.error(f"Error occurred: {str(e)}")

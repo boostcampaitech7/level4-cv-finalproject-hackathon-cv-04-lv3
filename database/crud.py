@@ -11,7 +11,7 @@ def get_target_ids(metadata_path, target_parameter:str, target_data:str):
     df = pd.read_csv(metadata_path)
     target_ids = df[df[target_parameter] == target_data]['id']
     return df, target_ids
-
+    
 
 def create_db(db_path, documents, category='None'):
 
@@ -80,8 +80,11 @@ def update_db(db_path, documents, category='None'):
     new_df = pd.DataFrame(new_metadata)
 
     metadata_path = os.path.join(db_path, "metadata.csv")
-    df = pd.read_csv(metadata_path)
-    df = pd.concat([df, new_df], ignore_index=True)
+    if os.path.exists(metadata_path):
+        df = pd.read_csv(metadata_path)
+        df = pd.concat([df, new_df], ignore_index=True)
+    else:
+        df = new_df
     df.to_csv(metadata_path, index=False)
     print("Total data 개수:", len(df))
 

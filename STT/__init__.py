@@ -1,0 +1,1 @@
+from .clova_speech import ClovaSpeechClient

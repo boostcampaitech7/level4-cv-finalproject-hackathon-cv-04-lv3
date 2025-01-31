@@ -35,15 +35,14 @@ def create_db(db_path, documents, category='None'):
     print("Total data 개수:", len(df))
 
 
-def read_data(db_path, target_parameter=None, target_data=None) -> List[Document]:
+def read_data(db_path, target_parameter:str = None, target_data:str = None) -> List[Document]:
 
     if target_parameter and target_data: # Target 데이터만 출력
         metadata_path = os.path.join(db_path, "metadata.csv")
         df, target_ids = get_target_ids(metadata_path, target_parameter, target_data)
         
         if len(target_ids) == 0:
-            print("일치하는 데이터가 없습니다.")
-            return
+            return print("일치하는 데이터가 없습니다.")
         else:
             db = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
             result = [db.docstore.search(id) for id in target_ids]
@@ -91,13 +90,14 @@ def update_db(db_path, documents, category='None'):
     df.to_csv(metadata_path, index=False)
     print("Total data 개수:", len(df))
 
+
 def delete_data(db_path, target_parameter:str, target_data:str):
 
     metadata_path = os.path.join(db_path, "metadata.csv")
     df, target_ids = get_target_ids(metadata_path, target_parameter, target_data)
     
     if len(target_ids) == 0:
-        print("일치하는 데이터가 없습니다.")
+        return {"message": "일치하는 데이터가 없습니다.", "deleted_count": 0}
     else:
         # Delete from FAISS VectorDB
         db = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
@@ -108,7 +108,7 @@ def delete_data(db_path, target_parameter:str, target_data:str):
         updated_df = df[~df['id'].isin(target_ids)]
         updated_df.to_csv(metadata_path, index=False)
         
-        print("Deleted data 개수:", len(target_ids))
+        return {"message": "데이터가 삭제되었습니다.", "deleted_count": len(target_ids)}
 
 def create_qa_chain(query: str, retriever_config: dict, llm_config: dict, db_path: str):
     try:

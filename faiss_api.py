@@ -1,20 +1,17 @@
 import os
 from fastapi import FastAPI, HTTPException
 from typing import List, Optional
-from rag import get_upstage_embeddings_model
 import uvicorn
 from langchain_core.documents import Document
 import logging
 import traceback
 
-from utils import get_solar_pro
-from database import SimilaritySchema, MMRSchema, SimilarityThresholdSchema, create_qa_chain, create_db, update_db
+from database import SimilaritySchema, MMRSchema, SimilarityThresholdSchema, create_qa_chain, create_db, update_db, read_data, delete_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
-embeddings = get_upstage_embeddings_model()
 
 db_path = "./faiss_db"
 
@@ -27,6 +24,24 @@ async def add_news_documents(documents: List[Document]):
         else:
             update_db(db_path, documents, category="News")
             return {"status": "success", "message": "Documents added to existing DB successfully"}
+    except Exception as e:
+        logger.error(f"Error occurred: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/search_data")
+async def search_data(target_parameter: str, target_data: str):
+    try:
+        return read_data(db_path, target_parameter=target_parameter, target_data=target_data)
+    except Exception as e:
+        logger.error(f"Error occurred: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/delete_data")
+async def del_data(target_parameter: str, target_data: str):
+    try:
+        return delete_data(db_path, target_parameter=target_parameter, target_data=target_data)
     except Exception as e:
         logger.error(f"Error occurred: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
@@ -76,6 +91,8 @@ async def rag_mmr(requests: MMRSchema):
         'chain_type': requests.chain_type
     }
     return create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=30678)

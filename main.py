@@ -69,6 +69,14 @@ for doc in input_docs:
     #     score_threshold = 0.7
     # )
 
+
+    # delete = client.delete_data("date", "2025-01-31")
+    # print(delete)
+    # print("-------------------------------")
+
+    # search = client.search_data("date", "2025-01-31")
+    # print(search)
+
     print("Solar Pro input :")
     print(prompt)
     print("Solar Pro output : ")

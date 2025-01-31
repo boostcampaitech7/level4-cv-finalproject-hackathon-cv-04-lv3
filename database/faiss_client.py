@@ -59,3 +59,23 @@ class FAISSClient:
             }
         )
         return response.json()
+    
+    def search_data(self, target_parameter: str = None, target_data: str = None):
+        response = requests.get(
+            f"{self.base_url}/search_data",
+            params={
+                "target_parameter": target_parameter,
+                "target_data": target_data
+            }
+        )
+        return response.json()
+    
+    def delete_data(self, target_parameter: str = None, target_data: str = None):
+        response = requests.delete(
+            f"{self.base_url}/delete_data",
+            params={
+                "target_parameter": target_parameter,
+                "target_data": target_data
+            }
+        )
+        return response.json()

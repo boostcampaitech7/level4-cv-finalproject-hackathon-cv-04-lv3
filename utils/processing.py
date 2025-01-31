@@ -29,6 +29,16 @@ def preprocess_speech_data(speech_data):
     documents = [Document(page_content=input_text)]
     return documents
 
+def preprocess_STT_data(speech_data):
+    segments = speech_data["segments"]
+
+    formatted_segments = [
+        {"start": segment["start"], "end": segment["end"], "text": segment["text"]}
+        for segment in segments
+    ]
+
+    return formatted_segments
+
 def merge_segments(segments):
     if not segments:
         return []

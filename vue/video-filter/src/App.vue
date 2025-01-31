@@ -1,10 +1,15 @@
 <template>
   <div class="app">
+    <LoadingOverlay v-if="isLoading" :LoadingText="LoadingText" />
+    <div class="left-container">
     <input type="file" @change="handleFileUpload" accept="video/*" />
     <Video ref="videoComponent" :videoUrl="videoUrl" :key="videoUrl" />
     <button v-if="videoFile" @click="convertToText">변환</button>
     <Script :transcript="transcript" @sentence-clicked="handleSentenceClick" />
+    </div>
+    <div class="right-container">
     <RevisedScript :transcript="revised_transcript" @sentence-clicked="handleSentenceClick" />
+  </div>
   </div>
 </template>
 
@@ -14,12 +19,14 @@ import Script from "./components/Script.vue";
 import RevisedScript from "./components/RevisedScript.vue";
 import { processSTT } from "./utils/stt.js";
 import { processSolar } from "./utils/solar";
+import LoadingOverlay from "./components/LoadingOverlay.vue";
 
 export default {
   components: {
     Video,
     Script,
     RevisedScript,
+    LoadingOverlay,
   },
   data() {
     return {
@@ -27,6 +34,8 @@ export default {
       videoUrl: null,
       transcript: [],
       revised_transcript: [],
+      isLoading: false,
+      LoadingText: "",
     };
   },
   methods: {
@@ -39,13 +48,36 @@ export default {
     },
     async convertToText() {
       if (!this.videoFile) return;
-      this.transcript = await processSTT(this.videoFile);
-      let revisedData = await processSolar(this.transcript);
+      this.isLoading = true;
 
+      this.LoadingText = "STT 변환 중"
+      let scriptData = await processSTT(this.videoFile);
+
+      this.LoadingText = "민감발언 탐지 중"
+      let revisedData = await processSolar(scriptData);
+      
+      scriptData = scriptData.map(sentence => ({
+        ...sentence,
+        isModified: false
+      }));
+
+      let scriptIndex = 0;
       for (let sentence of revisedData) {
+        while (scriptIndex < scriptData.length) {
+          if (scriptData[scriptIndex].start === sentence.start) {
+            scriptData[scriptIndex].isModified = true;
+            break;
+          }
+          scriptIndex++;
+        }
+
         sentence.thumbnail = await this.generateThumbnail(sentence.start);
       }
+
+      this.transcript = scriptData;
       this.revised_transcript = revisedData;
+
+      this.isLoading = false;
     },
     handleSentenceClick(startTime) {
       if (this.$refs.videoComponent) {

@@ -1,19 +1,14 @@
 import os
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from langchain_community.vectorstores import FAISS
 from typing import List, Optional
 from rag import get_upstage_embeddings_model
-from database import create_db, update_db
 import uvicorn
 from langchain_core.documents import Document
-from langchain.chains import RetrievalQA
 import logging
 import traceback
 
 from utils import get_solar_pro
-from database import SimilaritySchema, MMRSchema, SimilarityThresholdSchema
-# from database import NewsDocument
+from database import SimilaritySchema, MMRSchema, SimilarityThresholdSchema, create_qa_chain, create_db, update_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,63 +34,48 @@ async def add_news_documents(documents: List[Document]):
 
 @app.post("/rag/similarity")
 async def rag_similarity(requests: SimilaritySchema):
-    try:
-        vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
-        qa = RetrievalQA.from_chain_type(
-            llm=get_solar_pro(requests.max_token, requests.temperature),
-            chain_type=requests.chain_type,
-            retriever=vector_store.as_retriever(
-                search_kwargs={'k': requests.k}
-            ),
-            return_source_documents=True
-        )
-        llm_response = qa.invoke(requests.query)
-        return llm_response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    retriever_config = {
+        'search_kwargs': {'k': requests.k}
+    }
+    llm_config = {
+        'max_token': requests.max_token,
+        'temperature': requests.temperature,
+        'chain_type': requests.chain_type
+    }
+    return create_qa_chain(requests.query, retriever_config, llm_config, db_path)
 
 @app.post("/rag/similarity_threshold")
 async def rag_similarity_threshold(requests: SimilarityThresholdSchema):
-    try:
-        vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
-        qa = RetrievalQA.from_chain_type(
-            llm=get_solar_pro(requests.max_token, requests.temperature),
-            chain_type=requests.chain_type,
-            retriever=vector_store.as_retriever(
-                search_type="similarity_score_threshold",
-                search_kwargs={
-                    'score_threshold': requests.score_threshold, 
-                    'k': requests.k  
-                }
-            ),
-            return_source_documents=True
-        )
-        llm_response = qa.invoke(requests.query)
-        return llm_response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    retriever_config = {
+        'search_type': 'similarity_score_threshold',
+        'search_kwargs': {
+            'score_threshold': requests.score_threshold,
+            'k': requests.k
+        }
+    }
+    llm_config = {
+        'max_token': requests.max_token,
+        'temperature': requests.temperature,
+        'chain_type': requests.chain_type
+    }
+    return create_qa_chain(requests.query, retriever_config, llm_config, db_path)
 
 @app.post("/rag/mmr")
 async def rag_mmr(requests: MMRSchema):
-    try:
-        vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
-        qa = RetrievalQA.from_chain_type(
-            llm=get_solar_pro(requests.max_token, requests.temperature),
-            chain_type=requests.chain_type,
-            retriever=vector_store.as_retriever(
-                search_type="mmr",
-                search_kwargs={
-                    'k': requests.k,  # 최종 반환 문서 수
-                    'fetch_k': requests.fetch_k,  # 후보 문서 수
-                    'lambda_mult': requests.lambda_mult  # 다양성 vs 관련성 가중치
-                }
-            ),
-            return_source_documents=True
-        )
-        llm_response = qa.invoke(requests.query)
-        return llm_response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    retriever_config = {
+        'search_type': 'mmr',
+        'search_kwargs': {
+            'k': requests.k,
+            'fetch_k': requests.fetch_k,
+            'lambda_mult': requests.lambda_mult
+        }
+    }
+    llm_config = {
+        'max_token': requests.max_token,
+        'temperature': requests.temperature,
+        'chain_type': requests.chain_type
+    }
+    return create_qa_chain(requests.query, retriever_config, llm_config, db_path)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=30678)

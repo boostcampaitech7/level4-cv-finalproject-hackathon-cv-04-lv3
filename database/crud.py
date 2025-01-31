@@ -1,6 +1,9 @@
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
+from langchain.chains import RetrievalQA
 from rag import get_upstage_embeddings_model
+from utils import get_solar_pro
+from fastapi import HTTPException
 from typing import List
 import pandas as pd
 import os
@@ -88,7 +91,6 @@ def update_db(db_path, documents, category='None'):
     df.to_csv(metadata_path, index=False)
     print("Total data 개수:", len(df))
 
-
 def delete_data(db_path, target_parameter:str, target_data:str):
 
     metadata_path = os.path.join(db_path, "metadata.csv")
@@ -107,3 +109,16 @@ def delete_data(db_path, target_parameter:str, target_data:str):
         updated_df.to_csv(metadata_path, index=False)
         
         print("Deleted data 개수:", len(target_ids))
+
+def create_qa_chain(query: str, retriever_config: dict, llm_config: dict, db_path: str):
+    try:
+        vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
+        qa = RetrievalQA.from_chain_type(
+            llm=get_solar_pro(llm_config['max_token'], llm_config['temperature']),
+            chain_type=llm_config['chain_type'],
+            retriever=vector_store.as_retriever(**retriever_config),
+            return_source_documents=True
+        )
+        return qa.invoke(query)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

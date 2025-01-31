@@ -16,7 +16,7 @@
         methods: {
             seekToTime(time) {
                 if (this.$refs.videoPlayer) {
-                    this.$refs.videoPlayer.currentTime = time;
+                    this.$refs.videoPlayer.currentTime = time / 1000;
                     this.$refs.videoPlayer.play();
                 }
             }

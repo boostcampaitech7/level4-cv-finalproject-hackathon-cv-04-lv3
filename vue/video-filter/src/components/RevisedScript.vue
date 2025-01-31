@@ -1,8 +1,15 @@
 <template>
     <div class="revised-script">
       <h2>교정된 스크립트</h2>
+
+      <div class="pagination">
+        <button class="arrow-button" @click="prevPage" :disabled="currentPage === 1">◀</button>
+        <span>{{ currentPage }} / {{ totalPages }}</span>
+        <button class="arrow-button" @click="nextPage" :disabled="currentPage === totalPages">▶</button>
+      </div>
+
       <div 
-        v-for="(sentence, index) in transcript" 
+        v-for="(sentence, index) in paginatedTranscript" 
         :key="index" 
         @click="handleClick(sentence)"
         class="sentence-block"
@@ -31,11 +38,36 @@
         default: () => [],
       },
     },
+    data() {
+      return {
+        currentPage: 1,
+        pageSize: 4,
+      }
+    },
+    computed: {
+      paginatedTranscript() {
+        const start = (this.currentPage - 1) * this.pageSize;
+        return this.transcript.slice(start, start + this.pageSize);
+      },
+      totalPages() {
+        return Math.ceil(this.transcript.length / this.pageSize);
+      }
+    },
     methods: {
       handleClick(sentence) {
         console.log(`클릭한 문장의 시작 시간: ${sentence.start}초`);
         this.$emit("sentence-clicked", sentence.start);
       },
+      prevPage() {
+        if (this.currentPage > 1) {
+          this.currentPage--;
+        }
+      },
+      nextPage() {
+        if (this.currentPage < this.totalPages) {
+          this.currentPage++;
+        }
+      }
     },
   };
   </script>
@@ -99,5 +131,36 @@
   .after {
     color: #5cb85c; /* 초록색 */
   }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 15px;
+}
+.arrow-button {
+    padding: 8px 12px;
+    font-size: 18px;
+    margin: 0 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+.arrow-button:hover {
+    background-color: #0056b3;
+    transform: scale(1.1);
+}
+.arrow-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: scale(1);
+}
+.pagination span {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+}
   </style>
   

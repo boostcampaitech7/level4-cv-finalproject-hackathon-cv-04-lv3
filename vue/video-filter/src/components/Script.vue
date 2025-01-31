@@ -4,7 +4,7 @@
         <p>
             <span
             v-for="(sentence, index) in transcript" :key="index"
-            @click="handleClick(sentence)" class="sentence" >
+            @click="handleClick(sentence)" class="sentence" :class="{ modified: sentence.isModified }" >
                 {{ sentence.text }}
             </span>
         </p>
@@ -28,15 +28,15 @@
     };
 </script>
   
-  <style scoped>
+<style scoped>
   .video-script {
+    width: 100%;
     text-align: center;
     margin-top: 20px;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 5px;
     background-color: #f9f9f9;
-    max-width: 800px;
     margin: 20px auto;
   }
   p {
@@ -53,5 +53,10 @@
   .sentence:hover {
     background-color: #dbeafe;
   }
-  </style>
+
+  .modified {
+    color: red;
+    font-weight: bold;
+    }
+</style>
   

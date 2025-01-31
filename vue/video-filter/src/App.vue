@@ -2,14 +2,14 @@
   <div class="app">
     <LoadingOverlay v-if="isLoading" :LoadingText="LoadingText" />
     <div class="left-container">
-    <input type="file" @change="handleFileUpload" accept="video/*" />
-    <Video ref="videoComponent" :videoUrl="videoUrl" :key="videoUrl" />
-    <button v-if="videoFile" @click="convertToText">변환</button>
-    <Script :transcript="transcript" @sentence-clicked="handleSentenceClick" />
+      <input type="file" @change="handleFileUpload" accept="video/*" />
+      <Video ref="videoComponent" :videoUrl="videoUrl" :key="videoUrl" />
+      <button v-if="videoFile" @click="convertToText">변환</button>
+      <Script :transcript="transcript" @sentence-clicked="handleSentenceClick" />
     </div>
     <div class="right-container">
-    <RevisedScript :transcript="revised_transcript" @sentence-clicked="handleSentenceClick" />
-  </div>
+      <RevisedScript :transcript="revised_transcript" @sentence-clicked="handleSentenceClick" />
+    </div>
   </div>
 </template>
 
@@ -111,5 +111,30 @@ export default {
 </script>
 
 <style scoped>
+  .app {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    justify-content: space-between;
+  }
 
+  .left-container {
+    display: flex;
+    flex-direction: column;
+    width: 48%;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .right-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 48%;
+    padding: 20px;
+    box-sizing: border-box;
+  }
 </style>

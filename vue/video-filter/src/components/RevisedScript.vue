@@ -42,16 +42,21 @@
   
   <style scoped>
   .revised-script {
-    text-align: center;
-    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
   }
   .sentence-block {
     display: flex;
     align-items: center;
     background-color: #f3f4f6;
     padding: 10px;
-    margin: 10px auto;
-    width: 80%;
+    margin: 10px 0;
+    width: 100%;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s;

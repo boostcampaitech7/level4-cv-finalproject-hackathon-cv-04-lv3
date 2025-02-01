@@ -11,13 +11,18 @@
       <div class="upload-text">클릭 혹은 파일을 이곳에 드롭하세요.</div>
       <div class="file-types">*.mp4, *.avi, *.wav, *.mp3</div>
     </div>
-    <div v-else class="left-container">
-      <Video ref="videoComponent" :videoUrl="videoUrl" :key="videoUrl" />
-      <button v-if="videoFile" @click="convertToText">변환</button>
-      <Script :transcript="transcript" @sentence-clicked="handleSentenceClick" />
-    </div>
-    <div v-if="videoFile" class="right-containfr">
-      <RevisedScript :transcript="revised_transcript" @sentence-clicked="handleSentenceClick" />
+    <div v-else class="content-container">
+      <div class="left-container">
+        <Video ref="videoComponent" :videoUrl="videoUrl" :key="videoUrl" />
+        <div class="button-container">
+          <img v-if="videoFile" @click="convertToText" src="@/assets/change_button.png" alt="변환 버튼" class="change-button" />
+          <img v-if="videoFile" @click="reset" src="@/assets/reset-button.png" alt="초기화 버튼" class="reset-button" />
+        </div>
+        <Script :transcript="transcript" @sentence-clicked="handleSentenceClick" />
+      </div>
+      <div class="right-container">
+        <RevisedScript :transcript="revised_transcript" @sentence-clicked="handleSentenceClick" />
+      </div>
     </div>
   </div>
 </template>
@@ -104,6 +109,12 @@ export default {
 
       this.isLoading = false;
     },
+    reset() {
+      this.videoFile = null;
+      this.videoUrl = null;
+      this.transcript = [];
+      this.revised_transcript = [];
+    },
     handleSentenceClick(startTime) {
       if (this.$refs.videoComponent) {
         this.$refs.videoComponent.seekToTime(startTime);
@@ -138,12 +149,12 @@ export default {
 <style scoped>
   .app {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     width: 100%;
     height: 100vh;
     padding: 20px;
     box-sizing: border-box;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
   }
 
@@ -159,7 +170,6 @@ export default {
     text-align: center;
     width: 50%;
     height: 50%;
-    margin: auto;
   }
 
   .upload-style {
@@ -190,20 +200,50 @@ export default {
     color: #999;
   }
 
+  .content-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
   .left-container {
     display: flex;
     flex-direction: column;
-    width: 48%;
+    width: 50%;
     align-items: center;
     gap: 15px;
+    position: sticky;
+    top: 20px; /* 원하는 위치에 고정 */
   }
 
   .right-container {
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    align-items: flex-start;
-    width: 48%;
+    align-items: center;
+    width: 50%;
     padding: 20px;
     box-sizing: border-box;
+  }
+
+  .button-container {
+  gap: 10px;
+}
+
+.button-container img {
+  height: 50px; /* 원하는 크기로 조정 */
+  width: auto; /* 비율 유지 */
+}
+
+.change-button,
+.reset-button {
+  cursor: pointer;
+}
+
+  .change-button,
+  .reset-button {
+    cursor: pointer;
+    width: 150px; /* 버튼 크기 조정 */
+    height: auto;
   }
 </style>

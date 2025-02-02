@@ -11,7 +11,7 @@
         <p>
             <span
             v-for="(sentence, index) in paginatedTranscript" :key="index"
-            @click="handleClick(sentence)" class="sentence" :class="{ modified: sentence.isModified }" >
+            @click="handleClick(sentence)" class="sentence" :class="getModifiedClass(sentence.isModified)" >
                 {{ sentence.text }}
             </span>
         </p>
@@ -87,6 +87,11 @@
                 }
 
                 this.currentPage = 1;
+            },
+            getModifiedClass(isModified) {
+                if (isModified === 1) return "modified-orange";
+                if (isModified === 2) return "modified-red";
+                return "";
             }
         },
     };
@@ -118,9 +123,13 @@
     background-color: #dbeafe;
   }
 
-  .modified {
-    color: red;
+    .modified-orange {
+    color: orange;
     font-weight: bold;
+    }
+    .modified-red {
+        color: red;
+        font-weight: bold;
     }
 </style>
   

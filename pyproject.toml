@@ -24,7 +24,12 @@ dependencies = [
     "fastapi (>=0.115.7,<0.116.0)",
     "uvicorn (>=0.34.0,<0.35.0)",
     "pandas (==2.2.3)",
-    "python-multipart (>=0.0.20,<0.0.21)"
+    "python-multipart (>=0.0.20,<0.0.21)",
+    "torch (>=2.6.0,<3.0.0)",
+    "transformers (<4.48)",
+    "pydub (>=0.25.1,<0.26.0)",
+    "ffmpeg (>=1.4,<2.0)",
+    "ffmpeg-python (>=0.2.0,<0.3.0)"
 ]
 
 

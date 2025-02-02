@@ -156,6 +156,7 @@ export default {
     box-sizing: border-box;
     justify-content: center;
     align-items: center;
+    background-color: #F2F2F2;
   }
 
   .upload-container {

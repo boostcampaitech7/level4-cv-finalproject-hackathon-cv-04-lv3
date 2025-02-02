@@ -17,8 +17,7 @@
 import Video from "./components/Video.vue";
 import Script from "./components/Script.vue";
 import RevisedScript from "./components/RevisedScript.vue";
-import { processSTT } from "./utils/stt.js";
-import { processSolar } from "./utils/solar";
+import { processSTT, processEmotion, processSolar } from "./utils/api";
 import LoadingOverlay from "./components/LoadingOverlay.vue";
 
 export default {
@@ -53,19 +52,22 @@ export default {
       this.LoadingText = "STT 변환 중"
       let scriptData = await processSTT(this.videoFile);
 
+      this.LoadingText = "Emotion 감지지 중"
+      let EmotionData = await processEmotion(this.videoFile);
+
       this.LoadingText = "민감발언 탐지 중"
       let revisedData = await processSolar(scriptData);
       
-      scriptData = scriptData.map(sentence => ({
+      scriptData = scriptData.map((sentence, index) => ({
         ...sentence,
-        isModified: false
+        isModified: EmotionData[index],
       }));
 
       let scriptIndex = 0;
       for (let sentence of revisedData) {
         while (scriptIndex < scriptData.length) {
           if (scriptData[scriptIndex].start === sentence.start) {
-            scriptData[scriptIndex].isModified = true;
+            scriptData[scriptIndex].isModified += 1;
             break;
           }
           scriptIndex++;

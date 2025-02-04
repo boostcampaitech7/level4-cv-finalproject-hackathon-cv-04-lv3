@@ -1,19 +1,22 @@
 import os
+import requests
 from langchain_community.vectorstores import FAISS
 
-from rag import calculate_token, add_data, get_upstage_embeddings_model, extract_rss_content
+from rag import extract_rss_content
+from database import FAISSClient
 
-db_path = "./faiss_db"
-
-# URL 로드
-# loader = WebBaseLoader("https://www.yonhapnewstv.co.kr/browse/feed/")
-# data = loader.load()
 link = "https://www.yonhapnewstv.co.kr/browse/feed/"
 documents = extract_rss_content(link)
-print(documents)
 
-if not os.path.exists(db_path):
-    db = FAISS.from_documents(documents, get_upstage_embeddings_model())
-    db.save_local(db_path)
-else:
-    add_data(db_path=db_path, docs=documents, embedding_model=get_upstage_embeddings_model())
+
+# 사용 예시
+client = FAISSClient()
+
+# 문서 추가
+client.add_news_documents(documents)
+
+# # 문서 검색
+# results = client.search("검색어")
+
+# # 문서 삭제
+# client.delete_document("doc_id")

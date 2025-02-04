@@ -71,7 +71,7 @@ export async function processEmotion(videoFile) {
     }
 }
 
-export async function processSolar(query, k = 4, maxToken = 3000, temperature = 0.0, chainType = "stuff") {
+export async function processSolar(scriptData) {
     try {
         const response = await fetch(`${RAG_API_URL}/rag/similarity`, {
             method: 'POST',
@@ -79,11 +79,11 @@ export async function processSolar(query, k = 4, maxToken = 3000, temperature = 
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                query: query,
-                k: k,
-                max_token: maxToken,
-                temperature: temperature,
-                chain_type: chainType
+                query: scriptData,
+                k: 4,
+                max_token: 3000,
+                temperature: 0.0,
+                chain_type: "stuff"
             })
         });
 
@@ -94,6 +94,7 @@ export async function processSolar(query, k = 4, maxToken = 3000, temperature = 
         return await response.json();
     } catch (error) {
         console.error("RAG 요청 중 오류 발생:", error);
+        return [];
     }
 }
 

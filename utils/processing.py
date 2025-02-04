@@ -107,3 +107,35 @@ def slice_audio_numpy(audio_data, time_list, sample_rate=16):
         sliced_audio = audio_data[start_sample:end_sample]  # NumPy 슬라이싱
         results.append(sliced_audio)
     return results
+
+def parse_response(response_str: str):
+    try:
+        # 문자열에서 리스트 형태의 부분들을 추출
+        pattern = r'\[([^]]+)\]'
+        matches = re.findall(pattern, response_str)
+        
+        results = []
+        for match in matches:
+            # 각 매치에서 콤마로 구분된 요소들을 분리
+            elements = match.split(',', 4)  # 최대 5개 요소로 분리
+            if len(elements) >= 5:
+                # 숫자 문자열을 정수로 변환
+                start_time = int(elements[0])
+                end_time = int(elements[1])
+                # 문자열에서 따옴표 제거
+                original_text = elements[2].strip().strip("'\"")
+                explanation = elements[3].strip()
+                suggested_text = elements[4].strip().strip("'\"")
+                
+                results.append({
+                    'start': start_time,
+                    'end': end_time,
+                    'origin_text': original_text,
+                    'new_text': suggested_text
+                })
+        
+        return results
+    except Exception as e:
+        print(f"파싱 오류: {e}")
+        return []
+

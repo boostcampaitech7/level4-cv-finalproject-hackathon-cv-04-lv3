@@ -2,11 +2,13 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain.chains import RetrievalQA
 from rag import get_upstage_embeddings_model
-from utils import get_solar_pro
+from utils import get_solar_pro, parse_response
 from fastapi import HTTPException
 from typing import List
 import pandas as pd
 import os
+
+from prompts import one
 
 embeddings = get_upstage_embeddings_model()
 
@@ -110,7 +112,7 @@ def delete_data(db_path, target_parameter:str, target_data:str):
         
         return {"message": "데이터가 삭제되었습니다.", "deleted_count": len(target_ids)}
 
-def create_qa_chain(query: str, retriever_config: dict, llm_config: dict, db_path: str):
+def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_path: str):
     try:
         vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
         qa = RetrievalQA.from_chain_type(
@@ -119,6 +121,11 @@ def create_qa_chain(query: str, retriever_config: dict, llm_config: dict, db_pat
             retriever=vector_store.as_retriever(**retriever_config),
             return_source_documents=True
         )
-        return qa.invoke(query)
+        
+        context = "example"
+        query = one(context, query)
+        response = qa.invoke(query)
+        parsed_results = parse_response(response['result'])
+        return parsed_results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

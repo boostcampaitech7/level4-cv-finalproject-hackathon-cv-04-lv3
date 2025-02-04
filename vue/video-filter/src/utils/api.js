@@ -1,4 +1,4 @@
-import { STT_API_URL, EMOTION_API_URL, RAG_URL } from "./apiConfig";
+import { STT_API_URL, EMOTION_API_URL, RAG_API_URL } from "./apiConfig";
 
 export async function processSTT(videoFile) {
     if (!videoFile) {
@@ -73,7 +73,7 @@ export async function processEmotion(videoFile) {
 
 export async function processSolar(query, k = 4, maxToken = 3000, temperature = 0.0, chainType = "stuff") {
     try {
-        const response = await fetch(`${RAG_URL}/rag/similarity`, {
+        const response = await fetch(`${RAG_API_URL}/rag/similarity`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

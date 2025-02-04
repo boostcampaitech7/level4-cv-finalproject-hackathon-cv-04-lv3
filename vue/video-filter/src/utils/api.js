@@ -1,4 +1,4 @@
-import { STT_API_URL, EMOTION_API_URL } from "./apiConfig";
+import { STT_API_URL, EMOTION_API_URL, RAG_URL } from "./apiConfig";
 
 export async function processSTT(videoFile) {
     if (!videoFile) {
@@ -71,31 +71,29 @@ export async function processEmotion(videoFile) {
     }
 }
 
-export async function processSolar(transcript) {
-    console.log(transcript);
+export async function processSolar(query, k = 4, maxToken = 3000, temperature = 0.0, chainType = "stuff") {
+    try {
+        const response = await fetch(`${RAG_URL}/rag/similarity`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                query: query,
+                k: k,
+                max_token: maxToken,
+                temperature: temperature,
+                chain_type: chainType
+            })
+        });
 
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve([
-                { start: 0, end: 3, origin_text:"안녕하세요.", new_text: "반가워요요." },
-                { start: 4, end: 8, origin_text: "이것은 STT 테스트입니다.", new_text: "텍스트트 파일을 분석 중입니다." },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-                { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
-            ]);
-        }, 1000);
-    });
+        if (!response.ok) {
+            throw new Error(`요청 실패: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("RAG 요청 중 오류 발생:", error);
+    }
 }
 

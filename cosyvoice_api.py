@@ -4,8 +4,8 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from STT import ClovaSpeechClient
-from Emotion import process_func_batch
 from utils import *
+from fastapi import Form
 
 
 # FastAPI 객체 생성
@@ -19,10 +19,11 @@ app.add_middleware(
     allow_headers=["*"],  # 모든 헤더 허용
 )
 
-@app.post("/voice_transfer/")
-async def speech_to_text(file: UploadFile = File(...), changed_stripts: UploadFile = File(...)):
+@app.post("/sound_transfer/")
+async def speech_to_text(file: UploadFile = File(...), changed_stripts: str = Form(...)):
     print(file)
     print(changed_stripts)
+    return {"status": "success"}
 
 # @app.post("/video_tranfer/")
 # async def 

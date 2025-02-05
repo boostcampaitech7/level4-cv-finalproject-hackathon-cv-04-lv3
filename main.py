@@ -39,8 +39,7 @@ input_docs = text_splitter.split_documents(input_docs)
     
 for doc in input_docs:
     input_text = doc.page_content
-    context = "1. 최근 정치 이슈 : 탄핵 2. 최근 정치 이슈 : 불법선거" # rag에서 받아온 유사 문서들을 context에 저장해야 함 ex) 1. {rag1}\n2. {rag2}\n3. {rag3}    
-    prompt = one(context, input_text)
+    prompt = one(input_text)
 
     # llm_response = client.rag_similarity(
     #     query=prompt, 

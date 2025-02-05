@@ -14,30 +14,42 @@ def extract_curse_words(text):
     
     return curse_words
 
-# Clova Speech api에서 받은 결과를 원하는 입력 형태로 전처리 & 500 토큰씩 나눠서 반환
-def preprocess_speech_data(speech_data):
-    segments = speech_data["segments"]
-    input_text = ""
+# Clova Speech api에서 받은 결과를 Document(page_content="[start, end, 'text']\n[start, end, 'text']\n...") 형태로 반환
+def preprocess_speech_data(speech_data, separators=[".", "?"]):
+    result = []
+    current_start = None
+    current_sentence = []
+    
+    for segment in speech_data['segments']:
+        for word in segment['words']:
+            if current_start is None:
+                current_start = word[0]
+            current_sentence.append(word[2])
+            
+            if any(separator in word[2] for separator in separators):
+                result.append(f"[{current_start}, {word[1]}, '{' '.join(current_sentence)}']")
+                current_start = None
+                current_sentence = []
+                
+    return [Document(page_content='\n'.join(result))]
 
-    for segment in segments:
-        start = segment["start"]
-        end = segment["end"]
-        text = segment["text"]
-        input_text += f"[{start}, {end}, '{text}']\n"
-
-    input_text = input_text[:-2] # 마지막 줄바꿈 제거
-
-    documents = [Document(page_content=input_text)]
-    return documents
-
-def preprocess_STT_data(speech_data):
-    segments = speech_data["segments"]
-
-    formatted_segments = [
-        {"start": segment["start"], "end": segment["end"], "text": segment["text"]}
-        for segment in segments
-    ]
-
+# Clova Speech api에서 받은 결과를 [{"start"=int, "end"=int, "text"=str] 형태로 전처리
+def preprocess_STT_data(speech_data, separators=[".", "?"]):
+    formatted_segments = []
+    
+    current_start = None
+    current_sentence = []
+    for segment in speech_data['segments']:
+        for word in segment['words']:
+            if current_start is None:
+                current_start = word[0]
+            current_sentence.append(word[2])
+            
+            if any(separator in word[2] for separator in separators):
+                formatted_segments.append({"start": current_start, "end": word[1], "text": ' '.join(current_sentence)})
+                current_start = None
+                current_sentence = []
+                
     return formatted_segments
 
 def merge_segments(segments):

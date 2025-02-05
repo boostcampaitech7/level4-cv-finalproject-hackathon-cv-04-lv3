@@ -1,5 +1,5 @@
-import { STT_API_URL, EMOTION_API_URL } from "./apiConfig";
-
+import { EMOTION_API_URL } from "./apiConfig";//STT_API_URL//
+/*
 export async function processSTT(videoFile) {
     if (!videoFile) {
         console.error("비디오가 존재하지 않습니다.");
@@ -26,23 +26,24 @@ export async function processSTT(videoFile) {
         console.error("STT 요청 중 오류 발생:", error);
     }
 }
+*/
 
-// export async function processSTT(videoFile) {
-//     console.log(videoFile);
+export async function processSTT(videoFile) {
+     console.log(videoFile);
 
-//     return new Promise((resolve) => {
-//         setTimeout(() => {
-//             resolve([
-//                 { start: 0, end: 3, text: "안녕하세요." },
-//                 { start: 4, end: 7, text: "이것은 STT 테스트입니다." },
-//                 { start: 8, end: 12, text: "비디오 파일을 분석 중입니다." },
-//                 { start: 13, end: 16, text: "결과를 확인해주세요." },
-//                 { start: 16, end: 19, text: "2결과를 확인해주세요." },
-//                 { start: 19, end: 21, text: "3결과를 확인해주세요." },
-//             ]);
-//         }, 1000);
-//     });
-// }
+     return new Promise((resolve) => {
+         setTimeout(() => {
+             resolve([
+                 { start: 0, end: 3, text: "안녕하세요." },
+                 { start: 4, end: 7, text: "이것은 STT 테스트입니다." },
+                 { start: 8, end: 12, text: "비디오 파일을 분석 중입니다." },
+                 { start: 13, end: 16, text: "결과를 확인해주세요." },
+                 { start: 16, end: 19, text: "2결과를 확인해주세요." },
+                 { start: 19, end: 21, text: "3결과를 확인해주세요." },
+             ]);
+         }, 1000);
+     });
+ }
 
 export async function processEmotion(videoFile) {
     if (!videoFile) {
@@ -98,4 +99,3 @@ export async function processSolar(transcript) {
         }, 1000);
     });
 }
-

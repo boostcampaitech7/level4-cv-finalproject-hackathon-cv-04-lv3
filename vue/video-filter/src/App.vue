@@ -22,6 +22,7 @@
       </div>
       <div class="right-container">
         <RevisedScript :transcript="revised_transcript" @update-script="handleUpdateScript" />
+        <button @click="GenerateVoice">목소리 생성</button>
       </div>
     </div>
   </div>
@@ -31,7 +32,7 @@
 import Video from "./components/Video.vue";
 import Script from "./components/Script.vue";
 import RevisedScript from "./components/RevisedScript.vue";
-import { processSTT, processSolar } from "./utils/api";
+import { processSTT, processSolar, sound_transfer } from "./utils/api";
 import LoadingOverlay from "./components/LoadingOverlay.vue";
 
 export default {
@@ -52,6 +53,21 @@ export default {
     };
   },
   methods: {
+    async GenerateVoice() {
+      const choice_script = [];
+      for (let sentence of this.transcript) {
+          if (sentence.choice === 'O') {
+              choice_script.push(sentence);
+          }
+      }
+      if (choice_script.length === 0) {
+          console.warn("선택된 문장이 없습니다.");
+          return;
+      }
+      console.log("Here!")
+      let response = await sound_transfer(this.videoFile, choice_script);
+      console.log(response)
+    },
     handleFileUpload(event) {
       const file = event.target.files[0];
       if (file) {

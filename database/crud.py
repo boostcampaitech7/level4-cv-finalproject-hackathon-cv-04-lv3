@@ -122,9 +122,17 @@ def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_pa
             return_source_documents=True
         )
         
-        query = one(query)
-        response = qa.invoke(query)
+        prompt_query = one(query)
+        response = qa.invoke(prompt_query)
         parsed_results = parse_response(response['result'])
+        with open('llm_response.txt', 'w', encoding='utf-8') as f:
+            f.write("====== LLM Query and Response ======\n\n")
+            f.write(f"Front-Text:\n{query}\n\n")
+            f.write("------ LLM Response ------\n")
+            f.write(f"{response['result']}\n\n")
+            f.write("------ Parsed Results ------\n")
+            f.write(f"{parsed_results}\n")
+
         return parsed_results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

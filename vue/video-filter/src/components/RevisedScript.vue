@@ -11,7 +11,6 @@
     <div 
       v-for="(sentence, index) in paginatedTranscript" 
       :key="index" 
-      
       class="sentence-block"
     >
       <div class="thumbnail">
@@ -24,6 +23,18 @@
         </div>
         <div class="after">
           <span class="label">After:</span> "{{ sentence.new_text }}"
+        </div>
+        <div class="buttons">
+          <img 
+            src="@/assets/off-o.png" 
+            @click="sentence.choice !== 'O' && updateScript(sentence, 'O')" 
+            alt="O 버튼" 
+          />
+          <img 
+            src="@/assets/off-x.png" 
+            @click="sentence.choice !== 'X' && updateScript(sentence, 'X')" 
+            alt="X 버튼" 
+          />
         </div>
       </div>
     </div>
@@ -53,12 +64,15 @@ export default {
       return Math.ceil(this.transcript.length / this.pageSize);
     }
   },
+  created() {
+    this.transcript.forEach(sentence => {
+      if (sentence.choice === null || sentence.choice === undefined) {
+        sentence.choice = 'X';
+        this.updateScript(sentence, 'X'); // X 버튼을 한 번 실행하여 텍스트 색상을 빨간색으로 변경
+      }
+    });
+  },
   methods: {
-    /* div 부분 @click="handleClick(sentence)" 삭제*/
-    /*handleClick(sentence) {
-      console.log(`클릭한 문장의 시작 시간: ${sentence.start}초`);
-      this.$emit("sentence-clicked", sentence.start);
-    },*/
     prevPage() {
       if (this.currentPage > 1) {
         this.currentPage--;
@@ -68,8 +82,11 @@ export default {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
+    },
+    updateScript(sentence, choice) {
+      this.$emit('update-script', { sentence, choice });
     }
-  },
+  }
 };
 </script>
 
@@ -114,9 +131,6 @@ export default {
   font-size: 12px;
   color: #555;
   margin-top: 5px;
-}
-.text-container {
-  flex: 1;
 }
 .before, .after {
   padding: 5px;
@@ -163,4 +177,29 @@ export default {
   font-weight: bold;
   margin: 0 10px;
 }
+
+.buttons {
+  display: flex;
+  gap: 0px; /* 버튼 사이 간격을 조정 */
+  margin-top: 10px;
+}
+.buttons img {
+  width: 50px; /* 원하는 가로 길이로 설정 */
+  height: 30px; /* 원하는 세로 길이로 설정 */
+  cursor: pointer;
+  border: 2px solid transparent; /* 기본 테두리 색상 */
+}
+.buttons img.active {
+  border-color: red; /* 활성화된 버튼의 테두리 색상 */
+}
+.text-o {
+  color: #5cb85c; /* 초록색 */
+}
+.text-x {
+  color: #d9534f; /* 빨간색 */
+}
+.text-container {
+  flex: 1;
+}
+
 </style>

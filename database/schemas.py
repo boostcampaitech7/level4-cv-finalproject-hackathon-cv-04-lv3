@@ -1,18 +1,24 @@
 from pydantic import BaseModel, Field
+from typing import List
 
 class NewsDocument(BaseModel):
     page_content: str
     metadata: dict = None
 
+class ScriptItem(BaseModel):
+    start: int
+    end: int
+    text: str
+
 class SimilaritySchema(BaseModel):
-    query: str
+    query: List[ScriptItem]
     k: int = Field(default=4, ge=1, description="Number of documents to retrieve")
     max_token: int = Field(default=3000, ge=1, description="Maximum number of tokens for LLM")
     temperature: float = Field(default=0.0, ge=0.0, le=1.0, description="Temperature for LLM")
     chain_type: str = Field(default="stuff", description="Chain type for RetrievalQA")
 
 class SimilarityThresholdSchema(BaseModel):
-    query: str
+    query: List[ScriptItem]
     k: int = Field(default=4, ge=1, description="Number of documents to retrieve")
     max_token: int = Field(default=3000, ge=1, description="Maximum number of tokens for LLM")
     temperature: float = Field(default=0.0, ge=0.0, le=1.0, description="Temperature for LLM")
@@ -29,7 +35,7 @@ class SimilarityThresholdSchema(BaseModel):
     )
 
 class MMRSchema(BaseModel):
-    query: str
+    query: List[ScriptItem]
     k: int = Field(default=4, ge=1, description="Final number of documents to retrieve")
     fetch_k: int = Field(default=20, ge=1, description="Number of documents to fetch before filtering")
     lambda_mult: float = Field(

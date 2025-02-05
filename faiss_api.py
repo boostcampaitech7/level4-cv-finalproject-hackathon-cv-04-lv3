@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, HTTPException
 from typing import List, Optional
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from langchain_core.documents import Document
 import logging
@@ -12,6 +13,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 도메인에서 허용 (보안이 필요하면 특정 도메인으로 제한 가능)
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 HTTP 메서드 허용 (GET, POST 등)
+    allow_headers=["*"],  # 모든 헤더 허용
+)
+
 
 db_path = "./faiss_db"
 
@@ -57,7 +67,9 @@ async def rag_similarity(requests: SimilaritySchema):
         'temperature': requests.temperature,
         'chain_type': requests.chain_type
     }
-    return create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+
+    llm_response = create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+    return llm_response
 
 @app.post("/rag/similarity_threshold")
 async def rag_similarity_threshold(requests: SimilarityThresholdSchema):
@@ -73,7 +85,9 @@ async def rag_similarity_threshold(requests: SimilarityThresholdSchema):
         'temperature': requests.temperature,
         'chain_type': requests.chain_type
     }
-    return create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+
+    llm_response = create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+    return llm_response
 
 @app.post("/rag/mmr")
 async def rag_mmr(requests: MMRSchema):
@@ -90,9 +104,9 @@ async def rag_mmr(requests: MMRSchema):
         'temperature': requests.temperature,
         'chain_type': requests.chain_type
     }
-    return create_qa_chain(requests.query, retriever_config, llm_config, db_path)
 
-
+    llm_response = create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+    return llm_response
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=30678)

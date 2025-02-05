@@ -1,8 +1,10 @@
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain.chains import RetrievalQA
-from rag import get_upstage_embeddings_model
-from utils import get_solar_pro
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from rag import get_upstage_embeddings_model, calculate_token
+from utils import get_solar_pro, parse_response, preprocess_script_items
+from prompts import one
 from fastapi import HTTPException
 from typing import List
 import pandas as pd
@@ -110,7 +112,7 @@ def delete_data(db_path, target_parameter:str, target_data:str):
         
         return {"message": "데이터가 삭제되었습니다.", "deleted_count": len(target_ids)}
 
-def create_qa_chain(query: str, retriever_config: dict, llm_config: dict, db_path: str):
+def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_path: str):
     try:
         vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
         qa = RetrievalQA.from_chain_type(
@@ -119,6 +121,34 @@ def create_qa_chain(query: str, retriever_config: dict, llm_config: dict, db_pat
             retriever=vector_store.as_retriever(**retriever_config),
             return_source_documents=True
         )
-        return qa.invoke(query)
+
+        input_docs = preprocess_script_items(query)
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=0,
+            length_function=calculate_token,
+            separators=['\n']
+        )
+        
+        
+        input_docs = text_splitter.split_documents(input_docs)
+        all_parsed_results = []
+        with open('llm_response.txt', 'w', encoding='utf-8') as f:
+            for idx, doc in enumerate(input_docs):
+                prompt_query = one(doc)
+                response = qa.invoke(prompt_query)
+                parsed_result = parse_response(response['result'])
+                all_parsed_results.extend(parsed_result)
+                
+                # 로그 작성
+                f.write(f"\n====== Chunk {idx + 1}/{len(input_docs)} ======\n")
+                f.write(f"Front-Text:\n{doc}\n\n")
+                f.write("------ LLM Response ------\n")
+                f.write(f"{response['result']}\n\n")
+                f.write("------ Parsed Results ------\n")
+                f.write(f"{parsed_result}\n")
+
+        print(all_parsed_results)
+        return all_parsed_results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

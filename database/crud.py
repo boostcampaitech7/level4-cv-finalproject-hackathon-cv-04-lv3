@@ -122,8 +122,7 @@ def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_pa
             return_source_documents=True
         )
         
-        context = "example"
-        query = one(context, query)
+        query = one(query)
         response = qa.invoke(query)
         parsed_results = parse_response(response['result'])
         return parsed_results

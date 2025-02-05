@@ -108,7 +108,7 @@ export async function sound_transfer(videoFile, changedScripts) {
 
     const formData = new FormData();
     formData.append("file", videoFile);
-    formData.append("changed_stripts", JSON.stringify(changedScripts));;
+    formData.append("changed_stripts", JSON.stringify(changedScripts));
 
     try {
         const response = await fetch(TRANSFER_URL + "/sound_transfer/", {

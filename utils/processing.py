@@ -151,3 +151,11 @@ def parse_response(response_str: str):
         print(f"파싱 오류: {e}")
         return []
 
+# Document 요소를 가지는 list로 변환
+def preprocess_script_items(script_items):
+    result = []
+    
+    for item in script_items:
+        result.append(f"[{item.start}, {item.end}, '{item.text}']")
+        
+    return [Document(page_content='\n'.join(result))]

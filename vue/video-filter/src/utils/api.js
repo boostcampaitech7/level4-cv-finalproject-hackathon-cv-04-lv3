@@ -1,5 +1,6 @@
 import { STT_API_URL, EMOTION_API_URL, RAG_API_URL } from "./apiConfig";
 
+/*
 export async function processSTT(videoFile) {
     if (!videoFile) {
         console.error("비디오가 존재하지 않습니다.");

@@ -21,7 +21,7 @@
         <Script :transcript="transcript" @sentence-clicked="handleSentenceClick" />
       </div>
       <div class="right-container">
-        <RevisedScript :transcript="revised_transcript" @sentence-clicked="handleSentenceClick" />
+        <RevisedScript :transcript="revised_transcript" @update-script="handleUpdateScript" />
       </div>
     </div>
   </div>
@@ -31,7 +31,7 @@
 import Video from "./components/Video.vue";
 import Script from "./components/Script.vue";
 import RevisedScript from "./components/RevisedScript.vue";
-import { processSTT, processEmotion, processSolar } from "./utils/api";
+import { processSTT, processSolar } from "./utils/api";
 import LoadingOverlay from "./components/LoadingOverlay.vue";
 
 export default {
@@ -82,15 +82,13 @@ export default {
         return;
       }
 
-      this.LoadingText = "Emotion 감지 중"
-      let EmotionData = await processEmotion(this.videoFile);
-
       this.LoadingText = "민감발언 탐지 중";
       let revisedData = await processSolar(scriptData);
       
-      scriptData = scriptData.map((sentence, index) => ({
+      scriptData = scriptData.map((sentence) => ({
         ...sentence,
-        isModified: EmotionData[index],
+        isModified: false,
+        choice: null, // 초기값을 null로 설정
       }));
 
       let scriptIndex = 0;
@@ -109,18 +107,30 @@ export default {
       this.transcript = scriptData;
       this.revised_transcript = revisedData;
 
+      // 교정된 스크립트에 포함된 텍스트를 빨간색으로 변경
+      this.revised_transcript.forEach(sentence => {
+        this.handleUpdateScript({ sentence, choice: 'X' });
+      });
+
       this.isLoading = false;
+    },
+    handleSentenceClick(startTime) {
+      if (this.$refs.videoComponent) {
+        this.$refs.videoComponent.seekToTime(startTime);
+      }
+    },
+    handleUpdateScript({ sentence, choice }) {
+      const index = this.transcript.findIndex(s => s.start === sentence.start);
+      if (index !== -1) {
+        this.transcript[index].text = choice === 'O' ? sentence.new_text : sentence.origin_text;
+        this.transcript[index].choice = choice;
+      }
     },
     reset() {
       this.videoFile = null;
       this.videoUrl = null;
       this.transcript = [];
       this.revised_transcript = [];
-    },
-    handleSentenceClick(startTime) {
-      if (this.$refs.videoComponent) {
-        this.$refs.videoComponent.seekToTime(startTime);
-      }
     },
     generateThumbnail(time) {
       return new Promise((resolve) => {
@@ -249,4 +259,5 @@ export default {
     width: 150px; /* 버튼 크기 조정 */
     height: auto;
   }
+
 </style>

@@ -11,7 +11,7 @@
         <p>
             <span
             v-for="(sentence, index) in paginatedTranscript" :key="index"
-            @click="handleClick(sentence)" class="sentence" :class="getModifiedClass(sentence.isModified)" >
+            @click="handleClick(sentence)" class="sentence" :class="getModifiedClass(sentence.choice)" >
                 {{ sentence.text }}
             </span>
         </p>
@@ -88,10 +88,10 @@
 
                 this.currentPage = 1;
             },
-            getModifiedClass(isModified) {
-                if (isModified === 1) return "modified-orange";
-                if (isModified === 2) return "modified-red";
-                return "";
+            getModifiedClass(choice) {
+                if (choice === 'O') return "text-o";
+                if (choice === 'X') return "text-x";
+                return "text-default";
             }
         },
     };
@@ -123,13 +123,15 @@
     background-color: #dbeafe;
   }
 
-    .modified-orange {
-    color: orange;
+  .text-o {
+    color: #5cb85c; /* 초록색 */
     font-weight: bold;
-    }
-    .modified-red {
-        color: red;
-        font-weight: bold;
-    }
+  }
+  .text-x {
+    color: #d9534f; /* 빨간색 */
+    font-weight: bold;
+  }
+  .text-default {
+    color: black; /* 검은색 */
+  }
 </style>
-  

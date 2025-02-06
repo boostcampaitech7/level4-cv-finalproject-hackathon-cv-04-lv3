@@ -78,8 +78,8 @@ export async function processSolar(transcript) {
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve([
-                { start: 0, end: 3, origin_text:"안녕하세요.", new_text: "반가워요요." },
-                { start: 4, end: 8, origin_text: "이것은 STT 테스트입니다.", new_text: "텍스트트 파일을 분석 중입니다." },
+                { start: 0, end: 3, origin_text:"안녕하세요.", new_text: "반가워요요." ,reason: "비속어 또는 논란 언어가 포함되어 있습니다."},
+                { start: 4, end: 8, origin_text: "이것은 STT 테스트입니다.", new_text: "텍스트트 파일을 분석 중입니다." , reason: "엄처어어어어어어어어어엉 긴텍스트트트트트트트트트으으으으으으으ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ"},
                 { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
                 { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },
                 { start: 13, end: 16, origin_text: "결과를 확인해주세요.", new_text: "변화가 있나요?" },

@@ -29,11 +29,9 @@ db_path = "./faiss_db"
 async def add_news_documents(documents: List[Document]):
     try:
         if not os.path.exists(db_path):
-            create_db(db_path, documents, category="News")
-            return {"status": "success", "message": "New DB created and documents added successfully"}
+            return create_db(db_path, documents)
         else:
-            update_db(db_path, documents, category="News")
-            return {"status": "success", "message": "Documents added to existing DB successfully"}
+            return update_db(db_path, documents)
     except Exception as e:
         logger.error(f"Error occurred: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")

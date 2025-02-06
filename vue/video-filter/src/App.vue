@@ -53,23 +53,33 @@ export default {
     };
   },
   methods: {
-    async GenerateVoice() {
-      this.isLoading = true;
-      const choice_script = [];
-      for (let sentence of this.transcript) {
-          if (sentence.choice === 'O') {
-              choice_script.push(sentence);
-          }
-      }
-      
-      if (choice_script.length === 0) {
-          console.warn("선택된 문장이 없습니다.");
-          return;
-      }
-      this.LoadingText = "목소리 변환 중";
-      let response = await sound_transfer(this.videoFile, choice_script);
-      console.log(response)
-      this.isLoading = false;
+async GenerateVoice() {
+    this.isLoading = true;
+    const choice_script = [];
+    for (let sentence of this.transcript) {
+        if (sentence.choice === 'O') {
+            const revisedSentence = this.revised_transcript.find(
+                rs => rs.start === sentence.start
+            );
+            choice_script.push({
+                start: sentence.start,
+                end: sentence.end,
+                isModified: sentence.isModified,
+                choice: sentence.choice,
+                origin_text: revisedSentence?.origin_text || sentence.text,
+                change_text: revisedSentence?.new_text || sentence.text
+            });
+        }
+    }
+    
+    if (choice_script.length === 0) {
+        console.warn("선택된 문장이 없습니다.");
+        return;
+    }
+    this.LoadingText = "목소리 변환 중";
+    let response = await sound_transfer(this.videoFile, choice_script);
+    console.log(response)
+    this.isLoading = false;
     },
     handleFileUpload(event) {
       const file = event.target.files[0];

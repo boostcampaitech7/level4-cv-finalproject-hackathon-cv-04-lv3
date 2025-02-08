@@ -143,7 +143,8 @@ def parse_response(response_str: str):
                     'start': start_time,
                     'end': end_time,
                     'origin_text': original_text,
-                    'new_text': suggested_text
+                    'new_text': suggested_text,
+                    'reason' : explanation
                 })
         
         return results

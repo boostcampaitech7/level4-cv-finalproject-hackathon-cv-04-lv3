@@ -8,7 +8,7 @@ def load_template(template_name):
     return template
 
 def one(input_text):
-    prompt = load_template("test1")
+    prompt = load_template("main_prompt1")
     return prompt.format(input=input_text)
 
 def extract_rss_content_prompt(input_text):

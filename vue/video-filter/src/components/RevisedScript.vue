@@ -16,14 +16,6 @@
       <div class="thumbnail">
         <img v-if="sentence.thumbnail" :src="sentence.thumbnail" alt="Video thumbnail" />
         <div class="time-info">{{ sentence.start }}s - {{ sentence.end }}s</div>
-      </div>
-      <div class="text-container">
-        <div class="before">
-          <span class="label">Before:</span> "{{ sentence.origin_text }}"
-        </div>
-        <div class="after">
-          <span class="label">After:</span> "{{ sentence.new_text }}"
-        </div>
         <div class="buttons">
           <img 
             src="@/assets/off-o.png" 
@@ -35,6 +27,18 @@
             @click="sentence.choice !== 'X' && updateScript(sentence, 'X')" 
             alt="X 버튼" 
           />
+        </div>
+      </div>
+      <div class="text-container">
+        <div class="before">
+          <span class="label">Before:</span> "{{ sentence.origin_text }}"
+        </div>
+        <div class="after">
+          <span class="label">After:</span> "{{ sentence.new_text }}"
+        </div>
+        <div class="reason" v-if="sentence.reason">
+          <img src="@/assets/solar.png" alt="Reason 이미지" />
+          "{{ sentence.reason }}"
         </div>
       </div>
     </div>
@@ -63,14 +67,6 @@ export default {
     totalPages() {
       return Math.ceil(this.transcript.length / this.pageSize);
     }
-  },
-  created() {
-    this.transcript.forEach(sentence => {
-      if (sentence.choice === null || sentence.choice === undefined) {
-        sentence.choice = 'X';
-        this.updateScript(sentence, 'X'); // X 버튼을 한 번 실행하여 텍스트 색상을 빨간색으로 변경
-      }
-    });
   },
   methods: {
     prevPage() {
@@ -198,8 +194,29 @@ export default {
 .text-x {
   color: #d9534f; /* 빨간색 */
 }
+
+.text-default {
+  color: black; /* 검은색 */
+}
+
 .text-container {
   flex: 1;
+}
+
+.reason {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+}
+
+.reason img {
+  width: 24px; /* 원하는 가로 길이로 설정 */
+  height: 24px; /* 비율에 맞게 높이 자동 설정 */
+  vertical-align: middle; /* 텍스트와 이미지 수직 정렬 */
+  margin-right: 5px; /* 이미지와 텍스트 사이 간격 */
 }
 
 </style>

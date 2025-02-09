@@ -129,12 +129,12 @@ def parse_response(response_str: str):
         results = []
         for match in matches:
             # 각 매치에서 콤마로 구분된 요소들을 분리
-            in_pattern = r'\[([^]]+)\]'
+            in_pattern = r'<([^>]+)>'
             elements = re.findall(in_pattern, match)
             if len(elements) >= 5:
                 # 숫자 문자열을 정수로 변환
-                start_time = int(elements[0])
-                end_time = int(elements[1])
+                start_time = int(elements[0].strip())
+                end_time = int(elements[1].strip())
                 # 문자열에서 따옴표 제거
                 original_text = elements[2].strip()
                 explanation = elements[3].strip()

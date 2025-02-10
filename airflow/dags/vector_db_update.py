@@ -25,13 +25,17 @@ default_args = {
 def add_new_documents():
     client = FAISSClient(os.environ['FAISS_URL'])
 
-    link = "https://www.yonhapnewstv.co.kr/browse/feed/"
-    documents = extract_rss_content(link)
-    response = client.add_news_documents(documents)
+    new_documents = []
+    categories = ["politics", "economy", "society", "local", "international", "culture", "sports", "weather"]
+    for category in categories:
+        link = f"https://www.yonhapnewstv.co.kr/category/news/{category}/feed/"
+        documents = extract_rss_content(link)
+        new_documents.extend(documents)
+    response = client.add_news_documents(new_documents)
     
     if response['status'] == 'success':
         print(response['message'])
-        print(f"{len(documents)}개의 데이터가 추가되었습니다.")
+        print(f"Vector DB 전체 데이터 개수: {response['total_count']}개")
     else:
         print(response['detail'])
 
@@ -41,7 +45,8 @@ def delete_old_documents():
     response = client.delete_data('date', delete_date)
 
     if response['deleted_count'] > 0:
-        print(f"{response['deleted_count']}개의 {delete_date} 데이터가 삭제되었습니다.")
+        print(response['message'])
+        print(f"삭제된 데이터 개수: {response['deleted_count']}개")
     else:
         print(response['message'])
 

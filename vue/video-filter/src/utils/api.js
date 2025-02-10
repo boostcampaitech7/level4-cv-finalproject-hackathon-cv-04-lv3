@@ -1,4 +1,4 @@
-import { STT_API_URL, RAG_API_URL, TRANSFER_URL } from "./apiConfig";
+import { STT_API_URL, REWARD_API_URL, SENTIMENT_URL, RAG_API_URL, TRANSFER_URL } from "./apiConfig";
 
 
 export async function processSTT(videoFile) {
@@ -83,32 +83,96 @@ export async function processSolar(scriptData) {
     }
 }
 
-// export async function processReward(revisedData) {
-//     try {
-//         const response = await fetch(REWARD_API_URL, {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify({
-//                 query: scriptData,
-//                 k: 4,
-//                 max_token: 3000,
-//                 temperature: 0.0,
-//                 chain_type: "stuff"
-//             })
-//         });
+export async function processReward(revisedData) {
 
-//         if (!response.ok) {
-//             throw new Error(`요청 실패: ${response.status}`);
-//         }
+    try {
+        // const titleList = revisedData.map(item => item.title ?? "");
+        const titleList = revisedData.map(() => "");
+        const textList = revisedData.map(item => item.origin_text ?? "");
+        const newList = revisedData.map(item => item.new_text ?? "");
 
-//         return await response.json();
-//     } catch (error) {
-//         console.error("RAG 요청 중 오류 발생:", error);
-//         return [];
-//     }
-// }
+        const response_origin = await fetch(REWARD_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title_list: titleList,
+                text_list: textList
+            })
+        });
+
+        const response_new = await fetch(REWARD_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title_list: titleList,
+                text_list: newList
+            })
+        });
+
+        const response_origin_2 = await fetch(SENTIMENT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title_list: titleList,
+                text_list: textList
+            })
+        });
+
+        const response_new_2 = await fetch(SENTIMENT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title_list: titleList,
+                text_list: newList
+            })
+        });
+
+        if (!response_origin.ok || !response_new.ok) {
+            throw new Error(`요청 실패: ${response_origin.status}`);
+        }
+
+        // const [originData1, newData1] = await Promise.all([
+        //     response_origin.json(),
+        //     response_new.json(),
+        // ]);
+
+        // return [originData1, newData1];
+
+        const [originData1, newData1, originData2, newData2] = await Promise.all([
+            response_origin.json(),
+            response_new.json(),
+            response_origin_2.json(),
+            response_new_2.json(),
+        ]);
+        
+        // originData1이 2D 배열이므로, 각 문장별로 originData2의 값을 추가
+        const combinedOriginData = originData1.map((values, index) => {
+            const extraValue = originData2.results[index];  // originData2가 부족하면 0으로 채움
+            return [...values, extraValue];  // 기존 3개 값 + originData2 값 추가
+        });
+
+        // newData는 구조가 동일하다고 가정하고 동일하게 처리
+        const combinedNewData = newData1.map((values, index) => {
+            const extraValue = newData2.results[index];
+            return [...values, extraValue];
+        });
+        
+        return [combinedOriginData, combinedNewData];
+
+        // return await [response_origin.json(), response_new.json()];
+    } catch (error) {
+        console.error("BERT 요청 중 오류 발생:", error);
+        return [];
+    }
+}
 
 export async function sound_transfer(videoFile, changedScripts) {
     if (!videoFile) {

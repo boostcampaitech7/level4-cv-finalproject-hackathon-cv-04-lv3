@@ -53,7 +53,7 @@ export default {
     };
   },
   methods: {
-async GenerateVoice() {
+  async GenerateVoice() {
     this.isLoading = true;
     const choice_script = [];
     for (let sentence of this.transcript) {
@@ -77,8 +77,10 @@ async GenerateVoice() {
         return;
     }
     this.LoadingText = "목소리 변환 중";
-    let response = await sound_transfer(this.videoFile, choice_script);
-    console.log(response)
+    const videoUrl = await sound_transfer(this.videoFile, choice_script);
+    if (videoUrl) {
+        this.videoUrl = videoUrl; // 새로운 비디오 URL로 업데이트
+    }
     this.isLoading = false;
     },
     handleFileUpload(event) {
@@ -113,6 +115,8 @@ async GenerateVoice() {
 
       this.LoadingText = "민감발언 탐지 중";
       let revisedData = await processSolar(scriptData);
+
+      
       
       scriptData = scriptData.map((sentence) => ({
         ...sentence,

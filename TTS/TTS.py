@@ -6,7 +6,7 @@ from submodules.CosyVoice.cosyvoice.utils.file_utils import load_wav
 import torch
 import torchaudio
 
-from .processing import extract_audio_segment
+from .processing import *
 
 def sound_transfer(temp_file_path, scripts):
     # CosyVoice 모델 로드
@@ -16,13 +16,30 @@ def sound_transfer(temp_file_path, scripts):
                           fp16=False)
     
     results = []
+
     for script in scripts:
+        segment_data = {
+            "time_info": {
+                "start": script['start'],
+                "end": script['end']
+            },
+            "video_path": None,
+            "audio_path": None
+        }
+
         # 구간 오디오 추출
-        audio_segment = extract_audio_segment(
+        audio_segment = extract_audio_segment_memory(
             temp_file_path,
             script['start'],
             script['end']
         )
+
+        video_segment = extract_video_segment(
+                    temp_file_path,
+                    script['start'],
+                    script['end']
+                )
+        segment_data["video_path"] = video_segment
         
         prompt_speech_16k = load_wav(audio_segment, 16000)
         
@@ -34,13 +51,14 @@ def sound_transfer(temp_file_path, scripts):
             stream=False
         )
         
-        # 결과 저장
         for i, result in enumerate(inference_results):
-            output_path = f'output_{script["start"]}_{i}.wav'
+            output_path = f'/data/ephemeral/home/level4-cv-finalproject-hackathon-cv-04-lv3/cosyvoice_result/audio/output_{script["start"]}.wav'
             torchaudio.save(
                 output_path,
                 result['tts_speech'],
                 cosyvoice.sample_rate
             )
-            results.append(output_path)
+            segment_data["audio_path"] = output_path
+
+            results.append(segment_data)
     return results

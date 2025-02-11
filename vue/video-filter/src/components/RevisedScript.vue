@@ -15,7 +15,7 @@
     >
       <div class="thumbnail">
         <img v-if="sentence.thumbnail" :src="sentence.thumbnail" alt="Video thumbnail" />
-        <div class="time-info">{{ sentence.start }}s - {{ sentence.end }}s</div>
+        <div class="time-info">{{ formatTime(sentence.start) }} - {{ formatTime(sentence.end) }}</div>
         <div class="buttons">
           <img 
             src="@/assets/off-o.png" 
@@ -80,10 +80,23 @@ export default {
       }
     },
     updateScript(sentence, choice) {
+    if (sentence && choice) {
       this.$emit('update-script', { sentence, choice });
     }
-  }
-};
+  },
+  formatTime(duration){
+        var milliseconds = parseInt((duration%1000)/100)
+            , seconds = parseInt((duration/1000)%60)
+            , minutes = parseInt((duration/(1000*60))%60)
+            , hours = parseInt((duration/(1000*60*60))%24);
+        hours = (hours < 10) ? "0" + hours : hours;
+        minutes = (minutes < 10) ? "0" + minutes : minutes;
+        seconds = (seconds < 10) ? "0" + seconds : seconds;
+        return hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+    }
+}
+}
+
 </script>
 
 <style scoped>

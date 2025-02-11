@@ -52,7 +52,9 @@ def extract_video_segment(input_file, start_time, end_time):
         ffmpeg
         .input(input_file, ss=start_seconds, t=duration)
         .output(output_file,
-                codec='copy')  # 코덱 복사로 빠른 처리
+                codec='copy'
+                )  # 코덱 복사로 빠른 처리
+        .overwrite_output() 
         .run()
     )
     return output_file

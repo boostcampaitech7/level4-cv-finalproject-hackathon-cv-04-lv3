@@ -22,7 +22,9 @@
       </div>
       <div class="right-container">
         <RevisedScript :transcript="revised_transcript" @update-script="handleUpdateScript" />
-        <button @click="GenerateVoice">목소리 생성</button>
+        <div class="button-container">
+          <img @click="GenerateVoice" src="@/assets/noran.png" class="generate-button" />
+          </div> 
       </div>
     </div>
   </div>
@@ -339,7 +341,8 @@ export default {
 }
 
 .change-button,
-.reset-button {
+.reset-button,
+.generate-button {
   cursor: pointer;
 }
 

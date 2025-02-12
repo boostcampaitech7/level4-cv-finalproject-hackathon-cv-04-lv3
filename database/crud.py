@@ -4,7 +4,7 @@ from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from rag import get_upstage_embeddings_model, calculate_token
 from utils import get_solar_pro, parse_response, preprocess_script_items
-from prompts import one
+from prompts import one, two, three
 from fastapi import HTTPException
 from typing import List
 import pandas as pd
@@ -133,13 +133,18 @@ def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_pa
         
         input_docs = text_splitter.split_documents(input_docs)
         all_parsed_results = []
+        
         with open('llm_response.txt', 'w', encoding='utf-8') as f:
             for idx, doc in enumerate(input_docs):
-                prompt_query = one(doc)
-                response = qa.invoke(prompt_query)
-                parsed_result = parse_response(response['result'])
-                all_parsed_results.extend(parsed_result)
-                
+                # 각각의 프롬프트로 결과 얻기
+                original_text = doc.page_content
+                prompts = [one(original_text), two(original_text), three(original_text)]
+
+                for prompt in prompts:
+                    response = qa.invoke(prompt)
+                    parsed_result = parse_response(response)
+                    all_parsed_results.extend(parsed_result)
+
                 # 로그 작성
                 f.write(f"\n====== Chunk {idx + 1}/{len(input_docs)} ======\n")
                 f.write(f"Front-Text:\n{doc}\n\n")
@@ -147,6 +152,8 @@ def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_pa
                 f.write(f"{response['result']}\n\n")
                 f.write("------ Parsed Results ------\n")
                 f.write(f"{parsed_result}\n")
+
+        all_parsed_results.sort(key=lambda x: x['start'])
 
         print(all_parsed_results)
         return all_parsed_results

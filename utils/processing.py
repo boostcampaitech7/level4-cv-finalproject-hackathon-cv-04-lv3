@@ -120,31 +120,33 @@ def slice_audio_numpy(audio_data, time_list, sample_rate=16):
         results.append(sliced_audio)
     return results
 
-def parse_response(response_str: str):
+def parse_response(response):
     try:
+        response_str = response['result']
         # 문자열에서 리스트 형태의 부분들을 추출
         pattern = r'\[([^]]+)\]'
         matches = re.findall(pattern, response_str)
         
         results = []
         for match in matches:
-            # 각 매치에서 콤마로 구분된 요소들을 분리
-            elements = match.split(',', 4)  # 최대 5개 요소로 분리
+            in_pattern = r'<([^>]+)>'
+            elements = re.findall(in_pattern, match)
             if len(elements) >= 5:
                 # 숫자 문자열을 정수로 변환
-                start_time = int(elements[0])
-                end_time = int(elements[1])
+                start_time = int(elements[0].strip())
+                end_time = int(elements[1].strip())
                 # 문자열에서 따옴표 제거
-                original_text = elements[2].strip().strip("'\"")
+                original_text = elements[2].strip()
                 explanation = elements[3].strip()
-                suggested_text = elements[4].strip().strip("'\"")
+                suggested_text = elements[4].strip()
                 
                 results.append({
                     'start': start_time,
                     'end': end_time,
                     'origin_text': original_text,
                     'new_text': suggested_text,
-                    'reason' : explanation
+                    'reason' : explanation,
+                    'title': response['source_documents'][0].metadata['title']
                 })
         
         return results

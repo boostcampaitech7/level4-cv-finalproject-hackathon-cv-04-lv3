@@ -1,14 +1,28 @@
 <template>
   <div class="app">
     <LoadingOverlay v-if="isLoading" :LoadingText="LoadingText" />
-    <div class="left-container">
-      <input type="file" @change="handleFileUpload" accept="video/*" />
-      <Video ref="videoComponent" :videoUrl="videoUrl" :key="videoUrl" />
-      <button v-if="videoFile" @click="convertToText">변환</button>
-      <Script :transcript="transcript" @sentence-clicked="handleSentenceClick" />
+    <div v-if="!videoFile" class="upload-container" @dragover.prevent @drop="handleDrop" @click="triggerFileUpload">
+      <input type="file" @change="handleFileUpload" accept="video/*" class="upload-style" ref="fileInput" />
+      <div class="image-container">
+        <img class="image-icon" alt="" src="@/assets/image.png" />
+        <img class="mic-icon" alt="" src="@/assets/mic.png" />
+        <img class="play-icon" alt="" src="@/assets/video.png" />
+      </div>
+      <div class="upload-text">클릭 혹은 파일을 이곳에 드롭하세요.</div>
+      <div class="file-types">*.mp4, *.avi, *.wav, *.mp3</div>
     </div>
-    <div class="right-container">
-      <RevisedScript :transcript="revised_transcript" @sentence-clicked="handleSentenceClick" />
+    <div v-else class="content-container">
+      <div class="left-container">
+        <Video ref="videoComponent" :videoUrl="videoUrl" :key="videoUrl" />
+        <div class="button-container">
+          <img v-if="videoFile" @click="convertToText" src="@/assets/change_button.png" alt="변환 버튼" class="change-button" />
+          <img v-if="videoFile" @click="reset" src="@/assets/reset-button.png" alt="초기화 버튼" class="reset-button" />
+        </div>
+        <Script :transcript="transcript" @sentence-clicked="handleSentenceClick" />
+      </div>
+      <div class="right-container">
+        <RevisedScript :transcript="revised_transcript" @update-script="handleUpdateScript" />
+      </div>
     </div>
   </div>
 </template>
@@ -17,8 +31,7 @@
 import Video from "./components/Video.vue";
 import Script from "./components/Script.vue";
 import RevisedScript from "./components/RevisedScript.vue";
-import { processSTT } from "./utils/stt.js";
-import { processSolar } from "./utils/solar";
+import { processSTT, processSolar } from "./utils/api";
 import LoadingOverlay from "./components/LoadingOverlay.vue";
 
 export default {
@@ -46,26 +59,43 @@ export default {
         this.videoUrl = URL.createObjectURL(file);
       }
     },
+    handleDrop(event) {
+      event.preventDefault();
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        this.handleFileUpload({ target: { files: [file] } });
+      }
+    },
+    triggerFileUpload() {
+      this.$refs.fileInput.click();
+    },
     async convertToText() {
       if (!this.videoFile) return;
       this.isLoading = true;
 
-      this.LoadingText = "STT 변환 중"
+      this.LoadingText = "STT 변환 중";
       let scriptData = await processSTT(this.videoFile);
 
-      this.LoadingText = "민감발언 탐지 중"
+      if (!scriptData) {
+        this.isLoading = false;
+        alert("STT 변환에 실패했습니다.");
+        return;
+      }
+
+      this.LoadingText = "민감발언 탐지 중";
       let revisedData = await processSolar(scriptData);
       
-      scriptData = scriptData.map(sentence => ({
+      scriptData = scriptData.map((sentence) => ({
         ...sentence,
-        isModified: false
+        isModified: false,
+        choice: null, // 초기값을 null로 설정
       }));
 
       let scriptIndex = 0;
       for (let sentence of revisedData) {
         while (scriptIndex < scriptData.length) {
           if (scriptData[scriptIndex].start === sentence.start) {
-            scriptData[scriptIndex].isModified = true;
+            scriptData[scriptIndex].isModified += 1;
             break;
           }
           scriptIndex++;
@@ -77,12 +107,30 @@ export default {
       this.transcript = scriptData;
       this.revised_transcript = revisedData;
 
+      // 교정된 스크립트에 포함된 텍스트를 빨간색으로 변경
+      this.revised_transcript.forEach(sentence => {
+        this.handleUpdateScript({ sentence, choice: 'X' });
+      });
+
       this.isLoading = false;
     },
     handleSentenceClick(startTime) {
       if (this.$refs.videoComponent) {
         this.$refs.videoComponent.seekToTime(startTime);
       }
+    },
+    handleUpdateScript({ sentence, choice }) {
+      const index = this.transcript.findIndex(s => s.start === sentence.start);
+      if (index !== -1) {
+        this.transcript[index].text = choice === 'O' ? sentence.new_text : sentence.origin_text;
+        this.transcript[index].choice = choice;
+      }
+    },
+    reset() {
+      this.videoFile = null;
+      this.videoUrl = null;
+      this.transcript = [];
+      this.revised_transcript = [];
     },
     generateThumbnail(time) {
       return new Promise((resolve) => {
@@ -113,28 +161,103 @@ export default {
 <style scoped>
   .app {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     width: 100%;
     height: 100vh;
     padding: 20px;
     box-sizing: border-box;
-    justify-content: space-between;
+    justify-content: center;
+    align-items: center;
+    background-color: #F2F2F2;
+  }
+
+  .upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #ccc;
+    padding: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    width: 50%;
+    height: 50%;
+  }
+
+  .upload-style {
+    display: none;
+  }
+
+  .image-container {
+    display: flex;
+    gap: 20px;
+  }
+
+  .image-icon,
+  .mic-icon,
+  .play-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .upload-text {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #666;
+  }
+
+  .file-types {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #999;
+  }
+
+  .content-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
   }
 
   .left-container {
     display: flex;
     flex-direction: column;
-    width: 48%;
+    width: 50%;
     align-items: center;
     gap: 15px;
+    position: sticky;
+    top: 20px; /* 원하는 위치에 고정 */
   }
 
   .right-container {
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    align-items: flex-start;
-    width: 48%;
+    align-items: center;
+    width: 50%;
     padding: 20px;
     box-sizing: border-box;
   }
+
+  .button-container {
+  gap: 10px;
+}
+
+.button-container img {
+  height: 50px; /* 원하는 크기로 조정 */
+  width: auto; /* 비율 유지 */
+}
+
+.change-button,
+.reset-button {
+  cursor: pointer;
+}
+
+  .change-button,
+  .reset-button {
+    cursor: pointer;
+    width: 150px; /* 버튼 크기 조정 */
+    height: auto;
+  }
+
 </style>

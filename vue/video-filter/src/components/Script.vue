@@ -9,10 +9,17 @@
         </div>
 
         <p>
-            <span
-            v-for="(sentence, index) in paginatedTranscript" :key="index"
-            @click="handleClick(sentence)" class="sentence" :class="getModifiedClass(sentence.choice)" >
-                {{ sentence.text }}
+            <span v-for="(sentence, index) in paginatedTranscript" :key="index" @click="handleClick(sentence)" class="sentence">
+                <template v-if="sentence.choiceStart !== undefined && sentence.choiceEnd !== undefined">
+                    {{ sentence.text.slice(0, sentence.choiceStart) }}
+                    <span :class="getModifiedClass(sentence.choice)">
+                        {{ sentence.text.slice(sentence.choiceStart, sentence.choiceEnd) }}
+                    </span>
+                    {{ sentence.text.slice(sentence.choiceEnd) }}
+                </template>
+                <template v-else>
+                    {{ sentence.text }}
+                </template>
             </span>
         </p>
     </div>

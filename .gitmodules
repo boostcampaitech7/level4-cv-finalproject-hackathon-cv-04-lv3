@@ -1,3 +1,6 @@
 [submodule "submodules/CosyVoice"]
 	path = submodules/CosyVoice
 	url = https://github.com/FunAudioLLM/CosyVoice
+[submodule "submodules/video-retalking"]
+	path = submodules/video-retalking
+	url = https://github.com/OpenTalker/video-retalking.git

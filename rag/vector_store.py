@@ -8,22 +8,6 @@ from utils import get_solar_pro
 from prompts import extract_rss_content_prompt
 import feedparser
 
-def create_db(db_path, embedding_model):
-   empty_texts = []
-   empty_metadatas = []
-
-   db = FAISS.from_texts(empty_texts, embedding_model, metadatas=empty_metadatas)
-   db.save_local(db_path)
-   print("FAISS DB가 생성되었습니다.")
-
-def add_data(db_path, docs, embedding_model):
-   db = FAISS.load_local(db_path, embedding_model, allow_dangerous_deserialization=True)
-
-   # DB에 추가
-   db.add_documents(docs)
-   db.save_local(db_path)
-   print("새로운 데이터가 저장되었습니다.")
-
 def extract_rss_content(link):
 
    parse_rss = feedparser.parse(link)

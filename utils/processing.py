@@ -3,36 +3,6 @@ import numpy as np
 from langchain.schema import Document
 import ffmpeg
 
-def extract_curse_words(text):
-    pattern = r'\[(\d+),\s*(\d+),\s*\'([^\']+)\',\s*\'([^\']+)\'\]'
-    matches = re.findall(pattern, text)
-    
-    curse_words = []
-    for match in matches:
-        start, end, word, category = match
-        curse_words.append([int(start), int(end), word, category])
-    
-    return curse_words
-
-# Clova Speech api에서 받은 결과를 Document(page_content="[start, end, 'text']\n[start, end, 'text']\n...") 형태로 반환
-def preprocess_speech_data(speech_data, separators=[".", "?"]):
-    result = []
-    current_start = None
-    current_sentence = []
-    
-    for segment in speech_data['segments']:
-        for word in segment['words']:
-            if current_start is None:
-                current_start = word[0]
-            current_sentence.append(word[2])
-            
-            if any(separator in word[2] for separator in separators):
-                result.append(f"[{current_start}, {word[1]}, '{' '.join(current_sentence)}']")
-                current_start = None
-                current_sentence = []
-                
-    return [Document(page_content='\n'.join(result))]
-
 # Clova Speech api에서 받은 결과를 [{"start"=int, "end"=int, "text"=str] 형태로 전처리
 def preprocess_STT_data(speech_data, separators=[".", "?"]):
     formatted_segments = []
@@ -52,26 +22,49 @@ def preprocess_STT_data(speech_data, separators=[".", "?"]):
                 
     return formatted_segments
 
-def merge_segments(segments):
-    if not segments:
+# Document 요소를 가지는 list로 변환
+def preprocess_script_items(script_items):
+    result = []
+    
+    for item in script_items:
+        result.append(f"[{item.start}, {item.end}, '{item.text}']")
+        
+    return [Document(page_content='\n'.join(result))]
+
+def parse_response(response):
+    try:
+        response_str = response['result']
+        # 문자열에서 리스트 형태의 부분들을 추출
+        pattern = r'\[([^]]+)\]'
+        matches = re.findall(pattern, response_str)
+        
+        results = []
+        for match in matches:
+            in_pattern = r'<([^>]+)>'
+            
+            elements = match.split(',', 4)  # 최대 5개 요소로 분리
+            if len(elements) >= 5:
+                # 숫자 문자열을 정수로 변환
+                start_time = int(elements[0].strip())
+                end_time = int(elements[1].strip())
+                # 문자열에서 따옴표 제거
+                original_text = elements[2].strip()
+                explanation = elements[3].strip()
+                suggested_text = elements[4].strip()
+                
+                results.append({
+                    'start': start_time,
+                    'end': end_time,
+                    'origin_text': original_text,
+                    'new_text': suggested_text,
+                    'reason' : explanation,
+                    'title': response['source_documents'][0].metadata['title']
+                })
+        
+        return results
+    except Exception as e:
+        print(f"파싱 오류: {e}")
         return []
-        
-    merged = []
-    current = list(segments[0])
-    
-    for i in range(1, len(segments)):
-        start, end, word, filtered_word = segments[i]
-        
-        if current[1] == start:
-            current[1] = end
-            current[2] = current[2] + ' ' + word
-            current[3] = current[3] + ' ' + filtered_word
-        else:
-            merged.append(current)
-            current = list(segments[i])
-    
-    merged.append(current)
-    return merged
 
 def fade_in_out(fade_duration, main_sr, first_part, last_part, insert_array):
     # Fade In/Out 적용
@@ -119,47 +112,3 @@ def slice_audio_numpy(audio_data, time_list, sample_rate=16):
         sliced_audio = audio_data[start_sample:end_sample]  # NumPy 슬라이싱
         results.append(sliced_audio)
     return results
-
-def parse_response(response):
-    try:
-        response_str = response['result']
-        # 문자열에서 리스트 형태의 부분들을 추출
-        pattern = r'\[([^]]+)\]'
-        matches = re.findall(pattern, response_str)
-        
-        results = []
-        for match in matches:
-            in_pattern = r'<([^>]+)>'
-            
-            elements = match.split(',', 4)  # 최대 5개 요소로 분리
-            if len(elements) >= 5:
-                # 숫자 문자열을 정수로 변환
-                start_time = int(elements[0].strip())
-                end_time = int(elements[1].strip())
-                # 문자열에서 따옴표 제거
-                original_text = elements[2].strip()
-                explanation = elements[3].strip()
-                suggested_text = elements[4].strip()
-                
-                results.append({
-                    'start': start_time,
-                    'end': end_time,
-                    'origin_text': original_text,
-                    'new_text': suggested_text,
-                    'reason' : explanation,
-                    'title': response['source_documents'][0].metadata['title']
-                })
-        
-        return results
-    except Exception as e:
-        print(f"파싱 오류: {e}")
-        return []
-
-# Document 요소를 가지는 list로 변환
-def preprocess_script_items(script_items):
-    result = []
-    
-    for item in script_items:
-        result.append(f"[{item.start}, {item.end}, '{item.text}']")
-        
-    return [Document(page_content='\n'.join(result))]

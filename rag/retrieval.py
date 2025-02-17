@@ -32,7 +32,7 @@ def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_pa
             for idx, doc in enumerate(input_docs):
                 # 각각의 프롬프트로 결과 얻기
                 original_text = doc.page_content
-                for template in ['test1', 'test2', 'test3']:
+                for template in ['rag_prompt1', 'rag_prompt2', 'rag_prompt3']:
                     prompt = load_template(template, original_text)
                     response = qa.invoke(prompt)
                     parsed_result = parse_response(response)

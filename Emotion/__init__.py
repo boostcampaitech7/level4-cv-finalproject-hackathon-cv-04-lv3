@@ -1,0 +1,1 @@
+from .emotion_recognition import process_func_batch

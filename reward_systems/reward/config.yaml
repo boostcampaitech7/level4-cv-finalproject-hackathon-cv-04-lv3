@@ -1,0 +1,79 @@
+# 경로
+path:
+  data: "/data/ephemeral/home/data/create_pairs.json"
+  output: "/data/ephemeral/home/reward_systems/reward/result22"
+  pretrained: "/data/ephemeral/home/reward_systems/reward/checkpoints"
+
+# 모델 관련 설정
+model:
+  name: "OpenAssistant/reward-model-deberta-v3-large-v2"
+  type: "deberta"
+  max_length: 512
+  num_labels: 1
+  problem_type: "regression"
+  architecture:
+    pairwise_learning: True
+
+# Layerwise Learning Rate Decay 설정
+optimization:
+  layerwise_learning:
+    min_rate: 0.65
+    max_rate: 0.95
+  
+  # Gradual Unfreezing 설정
+  gradual_unfreezing:
+    warmup_steps: 1000
+    min_steps_per_layer: 500
+    initial_frozen_ratio: 0.8  # 초기에 동결할 레이어의 비율
+  
+  # Margin 설정
+  margin:
+    initial: 1.0
+    final: 0.7
+    warmup_steps: 1000
+
+# 데이터 관련 설정
+data:
+  train_val_split: 0.95
+  prompt: "주어진 context를 참고하여 주어진 scripts에서 사회적으로 민감한 발언 또는 문제의 소지(혐오, 편견)가 포함된 발언을 탐지하여 출력하시오"
+
+# 학습 관련 설정
+training:
+  # 기본 학습 설정
+  num_train_epochs: 5
+  per_device_train_batch_size: 16
+  per_device_eval_batch_size: 16
+  gradient_accumulation_steps: 4
+  learning_rate: 5.0e-5
+  weight_decay: 0.1
+  warmup_ratio: 0.6
+  max_grad_norm: 0.7
+  lr_scheduler_type: "cosine_with_restarts"
+  
+  # 평가 및 저장 설정
+  evaluation_strategy: "steps"
+  eval_steps: 50
+  save_strategy: "steps"
+  save_steps: 50
+  save_total_limit: 2
+  
+  # 최적화 설정
+  fp16: True
+  gradient_checkpointing: True
+  remove_unused_columns: False
+
+  dataloader_num_workers: 4
+
+  # 로깅 설정
+  logging_strategy: "steps"
+  logging_steps: 50
+  
+# 조기 종료 설정
+early_stopping_patience: 5
+
+# Wandb 관련 설정
+wandb:
+  project: "reward-model-training"
+  tags: ["reward-modeling", "korean", "hate-speech"]
+  notes: "Gradual unfreezing with layerwise learning rate decay"
+  

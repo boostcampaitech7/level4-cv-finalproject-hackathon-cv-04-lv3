@@ -1,7 +1,36 @@
 import re
 import numpy as np
-from langchain.schema import Document
+from langchain_core.documents import Document
 import ffmpeg
+import feedparser
+
+from .llm import get_solar_pro
+from prompts import load_template
+
+# Vector DB 저장 형식에 맞게 뉴스 전처리
+def extract_rss_content(link):
+
+   parse_rss = feedparser.parse(link)
+   documents = []
+   llm = get_solar_pro(max_token=5000, temperature=0.0)
+
+   for entry in parse_rss.entries:
+        content = entry.get('content', [{}])[0].get('value', '')
+        messages = [{"role": "user", "content": load_template("extract_rss_content_prompt", content)}]
+        response = llm.invoke(messages)
+        summary = response.content
+
+        document = Document(
+            page_content=summary,
+            metadata={
+                'published': entry.get('published', ''),
+                'category': entry.get('tags', [{}])[0].get('term', ''),
+                'title': entry.get('title', ''),
+                'link': entry.get('link', '')
+            }
+        )
+        documents.append(document)
+   return documents
 
 # Clova Speech api에서 받은 결과를 [{"start"=int, "end"=int, "text"=str] 형태로 전처리
 def preprocess_STT_data(speech_data, separators=[".", "?"]):

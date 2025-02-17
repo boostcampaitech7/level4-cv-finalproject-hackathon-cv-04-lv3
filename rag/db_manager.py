@@ -1,11 +1,6 @@
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
-from langchain.chains import RetrievalQA
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from rag import get_upstage_embeddings_model, calculate_token
-from utils import get_solar_pro, parse_response, preprocess_script_items
-from prompts import one, two, three
-from fastapi import HTTPException
+from utils import get_upstage_embeddings_model
 from typing import List
 import pandas as pd
 import os
@@ -117,52 +112,3 @@ def delete_data(db_path, target_parameter:str, target_data:str):
         updated_df.to_csv(metadata_path, index=False)
         
         return {"message": "Data deleted successfully", "deleted_count": len(target_ids)}
-
-
-def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_path: str):
-    try:
-        vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
-        qa = RetrievalQA.from_chain_type(
-            llm=get_solar_pro(llm_config['max_token'], llm_config['temperature']),
-            chain_type=llm_config['chain_type'],
-            retriever=vector_store.as_retriever(**retriever_config),
-            return_source_documents=True
-        )
-
-        input_docs = preprocess_script_items(query)
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=500,
-            chunk_overlap=0,
-            length_function=calculate_token,
-            separators=['\n']
-        )
-        
-        
-        input_docs = text_splitter.split_documents(input_docs)
-        all_parsed_results = []
-        
-        with open('llm_response.txt', 'w', encoding='utf-8') as f:
-            for idx, doc in enumerate(input_docs):
-                # 각각의 프롬프트로 결과 얻기
-                original_text = doc.page_content
-                prompts = [one(original_text), two(original_text), three(original_text)]
-
-                for prompt in prompts:
-                    response = qa.invoke(prompt)
-                    parsed_result = parse_response(response)
-                    all_parsed_results.extend(parsed_result)
-
-                # 로그 작성
-                f.write(f"\n====== Chunk {idx + 1}/{len(input_docs)} ======\n")
-                f.write(f"Front-Text:\n{doc}\n\n")
-                f.write("------ LLM Response ------\n")
-                f.write(f"{response['result']}\n\n")
-                f.write("------ Parsed Results ------\n")
-                f.write(f"{parsed_result}\n")
-
-        all_parsed_results.sort(key=lambda x: x['start'])
-
-        print(all_parsed_results)
-        return all_parsed_results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

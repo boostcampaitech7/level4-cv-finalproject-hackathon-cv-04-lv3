@@ -7,7 +7,7 @@ from langchain_core.documents import Document
 import logging
 import traceback
 
-from database import SimilaritySchema, MMRSchema, SimilarityThresholdSchema, create_qa_chain, create_db, update_db, read_data, delete_data
+from rag import SimilaritySchema, MMRSchema, SimilarityThresholdSchema, create_qa_chain, create_db, update_db, read_data, delete_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

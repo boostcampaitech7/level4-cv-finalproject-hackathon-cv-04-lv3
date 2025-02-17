@@ -41,6 +41,8 @@ async def speech_to_text(file: UploadFile = File(...)):
 
     return stt_result
 
+# 만약 음성에서 감정이 필요할 때 해당 코드를 사용하세요. 단, 모델이 존재해야 합니다.
+
 # @app.post("/emotion/")
 # async def emotion_recognition(file: UploadFile = File(...)):
 #     if stt_result is None:
@@ -63,8 +65,6 @@ async def speech_to_text(file: UploadFile = File(...)):
 #         os.remove(temp_file_path)
 
 #     return emotion_predictions
-
-
 
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=30066)

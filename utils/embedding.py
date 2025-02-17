@@ -1,8 +1,5 @@
-from langchain_upstage import UpstageEmbeddings
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from langchain_upstage import UpstageEmbeddings
 
 def get_upstage_embeddings_model():
     return UpstageEmbeddings(

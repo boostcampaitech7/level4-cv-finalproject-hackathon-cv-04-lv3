@@ -1,7 +1,6 @@
 import os
 import requests
 from typing import List
-# from database import NewsDocument
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 

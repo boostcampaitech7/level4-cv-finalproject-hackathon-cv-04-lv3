@@ -1,17 +1,15 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.models import Variable
+from dotenv import load_dotenv
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-
-from rag import extract_rss_content
-from database import FAISSClient
-from dotenv import load_dotenv
-
 load_dotenv()
+
+from rag import FAISSClient
+from utils import extract_rss_content
 
 default_args = {
     'owner': 'cv-04',

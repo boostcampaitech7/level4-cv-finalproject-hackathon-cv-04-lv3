@@ -71,7 +71,7 @@ def parse_response(response):
         for match in matches:
             in_pattern = r'<([^>]+)>'
             
-            elements = match.split(',', 4)  # 최대 5개 요소로 분리
+            elements = re.findall(in_pattern, match)
             if len(elements) >= 5:
                 # 숫자 문자열을 정수로 변환
                 start_time = int(elements[0].strip())

@@ -56,7 +56,7 @@ async def del_data(target_parameter: str, target_data: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/rag/similarity")
-async def rag_similarity(requests: SimilaritySchema):
+async def rag_similarity(requests: SimilaritySchema, use_mock: bool = False):
     retriever_config = {
         'search_kwargs': {'k': requests.k}
     }
@@ -66,7 +66,7 @@ async def rag_similarity(requests: SimilaritySchema):
         'chain_type': requests.chain_type
     }
 
-    llm_response = create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+    llm_response = create_qa_chain(requests.query, retriever_config, llm_config, db_path, use_mock)
     return llm_response
 
 @app.post("/rag/similarity_threshold")
@@ -88,7 +88,7 @@ async def rag_similarity_threshold(requests: SimilarityThresholdSchema):
     return llm_response
 
 @app.post("/rag/mmr")
-async def rag_mmr(requests: MMRSchema):
+async def rag_mmr(requests: MMRSchema, use_mock: bool = False):
     retriever_config = {
         'search_type': 'mmr',
         'search_kwargs': {
@@ -103,8 +103,8 @@ async def rag_mmr(requests: MMRSchema):
         'chain_type': requests.chain_type
     }
 
-    llm_response = create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+    llm_response = create_qa_chain(requests.query, retriever_config, llm_config, db_path, use_mock)
     return llm_response
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=30678)
+    uvicorn.run(app, host="0.0.0.0", port=30979)

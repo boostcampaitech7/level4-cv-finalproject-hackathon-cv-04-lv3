@@ -66,7 +66,7 @@ async def rag_similarity(requests: SimilaritySchema):
         'chain_type': requests.chain_type
     }
 
-    llm_response = create_qa_chain(requests.query, retriever_config, llm_config, db_path)
+    llm_response = await create_qa_chain(requests.query, retriever_config, llm_config, db_path)
     return llm_response
 
 @app.post("/rag/similarity_threshold")
@@ -107,4 +107,4 @@ async def rag_mmr(requests: MMRSchema):
     return llm_response
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=30678)
+    uvicorn.run(app, host="0.0.0.0", port=30979)

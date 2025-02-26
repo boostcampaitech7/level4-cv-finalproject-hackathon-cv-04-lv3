@@ -5,10 +5,11 @@ from utils import get_solar_pro, get_upstage_embeddings_model, calculate_token, 
 from prompts import load_template
 from fastapi import HTTPException
 import time
+import asyncio
 
 embeddings = get_upstage_embeddings_model()
 
-def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_path: str):
+async def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_path: str):
     try:
         # 벡터 스토어 로딩 시간 측정
         vector_start = time.time()
@@ -36,32 +37,22 @@ def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_pa
         all_parsed_results = []
         total_parsing_time = 0
         total_llm_time = 0
-        
-        with open('llm_response.txt', 'w', encoding='utf-8') as f:
-            for idx, doc in enumerate(input_docs):
-                original_text = doc.page_content
-                for template in ['rag_prompt1', 'rag_prompt2', 'rag_prompt3']:
-                    # LLM 호출 시간 측정
-                    prompt = load_template(template, original_text)
-                    llm_start = time.time()
-                    response = qa.invoke(prompt)
-                    llm_time = time.time() - llm_start
-                    total_llm_time += llm_time
 
-                    # 파싱 시간 측정
-                    parsing_start = time.time()
-                    parsed_result = parse_response(response)
-                    all_parsed_results.extend(parsed_result)
-                    parsing_time = time.time() - parsing_start
-                    total_parsing_time += parsing_time
+        for doc in input_docs:
+            original_text = doc.page_content
+            prompts = [load_template(template, original_text) for template in ['rag_prompt1', 'rag_prompt2', 'rag_prompt3']]
 
-                # 로그 작성
-                f.write(f"\n====== Chunk {idx + 1}/{len(input_docs)} ======\n")
-                f.write(f"Front-Text:\n{doc}\n\n")
-                f.write("------ LLM Response ------\n")
-                f.write(f"{response['result']}\n\n")
-                f.write("------ Parsed Results ------\n")
-                f.write(f"{parsed_result}\n")
+            llm_start = time.time()
+            responses = await asyncio.gather(*[qa.ainvoke(prompt) for prompt in prompts])
+            llm_time = time.time() - llm_start
+            total_llm_time += llm_time
+
+            parsing_start = time.time()
+            parsed_results = [parse_response(response) for response in responses]
+            for parsed_result in parsed_results:
+                all_parsed_results.extend(parsed_result)
+                parsing_time = time.time() - parsing_start
+                total_parsing_time += parsing_time
 
         # 결과 정렬 시간 측정
         sort_start = time.time()

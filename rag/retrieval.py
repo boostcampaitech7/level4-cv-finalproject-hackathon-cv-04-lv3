@@ -34,25 +34,24 @@ async def create_qa_chain(query: list, retriever_config: dict, llm_config: dict,
         input_docs = text_splitter.split_documents(input_docs)
         preprocess_time = time.time() - preprocess_start
 
-        all_parsed_results = []
-        total_parsing_time = 0
-        total_llm_time = 0
-
+        all_tasks = []
         for doc in input_docs:
             original_text = doc.page_content
-            prompts = [load_template(template, original_text) for template in ['rag_prompt1', 'rag_prompt2', 'rag_prompt3']]
-
-            llm_start = time.time()
-            responses = await asyncio.gather(*[qa.ainvoke(prompt) for prompt in prompts])
-            llm_time = time.time() - llm_start
-            total_llm_time += llm_time
-
-            parsing_start = time.time()
-            parsed_results = [parse_response(response) for response in responses]
-            for parsed_result in parsed_results:
-                all_parsed_results.extend(parsed_result)
-                parsing_time = time.time() - parsing_start
-                total_parsing_time += parsing_time
+            for template in ['rag_prompt1', 'rag_prompt2', 'rag_prompt3']:
+                prompt = load_template(template, original_text)
+                all_tasks.append(qa.ainvoke(prompt))
+        
+        # 모든 작업을 병렬로 실행
+        llm_start = time.time()
+        all_responses = await asyncio.gather(*all_tasks)
+        llm_time = time.time() - llm_start
+        
+        # 결과 처리
+        parsing_start = time.time()
+        all_parsed_results = []
+        for response in all_responses:
+            all_parsed_results.extend(parse_response(response))
+        parsing_time = time.time() - parsing_start
 
         # 결과 정렬 시간 측정
         sort_start = time.time()
@@ -64,10 +63,10 @@ async def create_qa_chain(query: list, retriever_config: dict, llm_config: dict,
         처리 시간 분석:
         - 벡터 스토어 로딩: {vector_time:.2f}초
         - 전처리: {preprocess_time:.2f}초
-        - 총 파싱: {total_parsing_time:.2f}초
+        - 총 파싱: {parsing_time:.2f}초
         - 결과 정렬: {sort_time:.2f}초
-        - 총 LLM 호출: {total_llm_time:.2f}초
-        - 총 처리 시간 (LLM 제외): {vector_time + preprocess_time + total_parsing_time + sort_time:.2f}초
+        - 총 LLM 호출: {llm_time:.2f}초
+        - 총 처리 시간 (LLM 제외): {vector_time + preprocess_time + parsing_time + sort_time:.2f}초
         """)
 
         print(all_parsed_results)

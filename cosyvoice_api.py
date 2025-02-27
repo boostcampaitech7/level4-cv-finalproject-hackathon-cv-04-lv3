@@ -7,6 +7,11 @@ from fastapi import Form, Response
 from TTS import sound_transfer
 from fastapi.responses import FileResponse
 import requests
+import time
+import io
+import base64
+
+from api_benchmark import log_time
 
 
 # FastAPI 객체 생성
@@ -24,22 +29,55 @@ TARGET_API_URL = "http://10.28.224.140:30981/process/"
 
 @app.post("/sound_transfer/")
 async def speech_to_text(file: UploadFile = File(...), changed_scripts: str = Form(...)):
-    print(file)
-    print(changed_scripts)
-    #임시 파일로 저장
-    whole_video = "/data/ephemeral/home/level4-cv-finalproject-hackathon-cv-04-lv3/cosyvoice_result/1.mp4"
+    start_time = time.time()
+
     scripts = json.loads(changed_scripts)
     
-    with open(whole_video, "wb") as temp_file:
-        temp_file.write(await file.read())
+    file_content = await file.read()
+    temp_file = io.BytesIO(file_content)
     
-    results = sound_transfer(whole_video, scripts)
-    whole_video_url = f"{whole_video}"
+    processing_start_time = time.time()
+    results = await sound_transfer(temp_file, scripts)
+    processing_end_time = time.time()
+    log_time('cosyvoice_timelog.txt' ,f"[sound_transfer] 내부 처리 시간: {processing_end_time - processing_start_time:.4f}초")
 
-    print(results) 
+    
+    encoded_results = []
+    for result in results:
+        result["video_data"].seek(0)
+        video_base64 = base64.b64encode(result["video_data"].read()).decode('utf-8')
+
+        result["audio_data"].seek(0)
+        audio_base64 = base64.b64encode(result["audio_data"].read()).decode('utf-8')
+
+        encoded_results.append({
+            "time_info": result["time_info"],
+            "video_base64": video_base64,
+            "audio_base64": audio_base64
+        })
+
     # retalk 서버에 요청
     try:
-        response = requests.post(TARGET_API_URL, json={"output_files": results, "whole": whole_video_url}, stream=True)
+        response_start = time.time()
+
+        temp_file.seek(0)
+        whole_video_base64 = base64.b64encode(temp_file.read()).decode('utf-8')
+
+        response = requests.post(
+            TARGET_API_URL, 
+            json={
+                "output_files": encoded_results, 
+                "whole_video_base64": whole_video_base64
+            },  
+            stream=True
+        )
+
+        response_end = time.time()
+        log_time('cosyvoice_timelog.txt', f"[sound_transfer] Retalk 서버 응답 시간: {response_end - response_start:.4f}초")
+
+        end_time = time.time()
+        log_time('cosyvoice_timelog.txt', f"[sound_transfer] 전체 처리 시간: {end_time - start_time:.4f}초")
+
         return Response(
             content=response.content,
             media_type="video/mp4",

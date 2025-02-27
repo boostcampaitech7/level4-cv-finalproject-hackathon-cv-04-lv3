@@ -36,8 +36,8 @@ async def sound_transfer(temp_file_path, scripts):
                 "start": script['start'],
                 "end": script['end']
             },
-            "video_path": None,
-            "audio_path": None
+            "video_data": None,
+            "audio_data": None
         }
 
         audio_extract_start = time.time()
@@ -50,7 +50,7 @@ async def sound_transfer(temp_file_path, scripts):
         all_audio_extract_time += (audio_extract_end - audio_extract_start)
 
         video_extract_start = time.time()
-        video_segment = await asyncio.to_thread(extract_video_segment,
+        video_segment = await asyncio.to_thread(extract_video_segment_memory,
             temp_file_path,
             script['start'],
             script['end']
@@ -59,7 +59,7 @@ async def sound_transfer(temp_file_path, scripts):
         all_video_extract_time += (video_extract_end - video_extract_start)
 
 
-        segment_data["video_path"] = video_segment
+        segment_data["video_data"] = video_segment
 
         inference_start = time.time()
         prompt_speech_16k = load_wav(audio_segment, 16000)
@@ -75,18 +75,23 @@ async def sound_transfer(temp_file_path, scripts):
         all_inference_time += (inference_end - inference_start)
 
         for i, result in enumerate(inference_results):
-            output_path = f'/data/ephemeral/home/level4-cv-finalproject-hackathon-cv-04-lv3/cosyvoice_result/audio/output_{script["start"]}.wav'
-            
+            audio_output = io.BytesIO()
             save_start = time.time()
-            await asyncio.to_thread(torchaudio.save,
-                output_path,
+            
+            await asyncio.to_thread(
+                torchaudio.save,
+                audio_output,  # 파일 경로 대신 BytesIO 객체
                 result['tts_speech'],
-                cosyvoice.sample_rate
+                cosyvoice.sample_rate,
+                format='wav'  # 형식 지정
             )
+
+            audio_output.seek(0)
+
             save_end = time.time()
             all_save_audio_time += (save_end - save_start)
 
-            segment_data["audio_path"] = output_path
+            segment_data["audio_data"] = audio_output
 
             results.append(segment_data)
     

@@ -1,30 +1,19 @@
 import os
 import sys
 import time
-import torch
 import torchaudio
 
 sys.path.append('submodules/CosyVoice/third_party/Matcha-TTS')
-from submodules.CosyVoice.cosyvoice.cli.cosyvoice import CosyVoice2
 from submodules.CosyVoice.cosyvoice.utils.file_utils import load_wav
 
 from .processing import *
 from api_benchmark import log_time
 import asyncio
 
-async def sound_transfer(temp_file_path, scripts):
+async def sound_transfer(temp_file_path, scripts, cosyvoice):
     total_start_time = time.time()  # 전체 실행 시간 측정 시작
-    
-    # CosyVoice 모델 로드
-    model_load_start = time.time()
-    cosyvoice = CosyVoice2('submodules/CosyVoice/pretrained_models/CosyVoice2-0.5B', 
-                          load_jit=False, 
-                          load_trt=False, 
-                          fp16=False)
-    model_load_end = time.time()
 
     results = []
-
     all_audio_extract_time = 0
     all_video_extract_time = 0
     all_inference_time = 0
@@ -100,7 +89,6 @@ async def sound_transfer(temp_file_path, scripts):
 
     log_time('cosyvoice_timelog.txt', f"""
     처리시간 분석
-    - Cosyvoice 모델 로딩 시간: {model_load_end - model_load_start:.4f} 초
     - 오디오 추출 시간: {all_audio_extract_time} 초
     - 비디오 추출 시간: {all_video_extract_time} 초
     - CosyVoice 음성 변환 시간: {all_inference_time:.4f} 초

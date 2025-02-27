@@ -1,4 +1,3 @@
-import os
 import json
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,12 +9,27 @@ import requests
 import time
 import io
 import base64
-
+import logging
 from api_benchmark import log_time
+import sys
+sys.path.append('submodules/CosyVoice/third_party/Matcha-TTS')
+from submodules.CosyVoice.cosyvoice.cli.cosyvoice import CosyVoice2
 
+logging.getLogger('multipart.multipart').setLevel(logging.INFO)
 
 # FastAPI 객체 생성
 app = FastAPI()
+
+@app.on_event("startup")
+async def load_model():
+    global cosyvoice
+    cosyvoice = CosyVoice2(
+        'submodules/CosyVoice/pretrained_models/CosyVoice2-0.5B',
+        load_jit=False,
+        load_trt=False,
+        fp16=False
+    )
+    print("✅ CosyVoice 모델 로딩 완료!")
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,11 +51,11 @@ async def speech_to_text(file: UploadFile = File(...), changed_scripts: str = Fo
     temp_file = io.BytesIO(file_content)
     
     processing_start_time = time.time()
-    results = await sound_transfer(temp_file, scripts)
+    results = await sound_transfer(temp_file, scripts, cosyvoice)
     processing_end_time = time.time()
     log_time('cosyvoice_timelog.txt' ,f"[sound_transfer] 내부 처리 시간: {processing_end_time - processing_start_time:.4f}초")
 
-    
+    base64_start_time = time.time()
     encoded_results = []
     for result in results:
         result["video_data"].seek(0)
@@ -55,6 +69,9 @@ async def speech_to_text(file: UploadFile = File(...), changed_scripts: str = Fo
             "video_base64": video_base64,
             "audio_base64": audio_base64
         })
+
+    base64_end_time = time.time()
+    log_time('cosyvoice_timelog.txt', f"[sound_transfer] Base64 변환 시간: {base64_end_time - base64_start_time:.4f}초")
 
     # retalk 서버에 요청
     try:

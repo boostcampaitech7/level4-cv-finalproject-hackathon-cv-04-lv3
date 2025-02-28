@@ -1,22 +1,25 @@
+import os
 import json
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from fastapi import Form, Response
+
 from TTS import sound_transfer
 from fastapi.responses import FileResponse
 import requests
 import time
-import io
-import base64
-import logging
 from api_benchmark import log_time
+import base64
+import io
+import logging
+
 import sys
 sys.path.append('submodules/CosyVoice/third_party/Matcha-TTS')
 from submodules.CosyVoice.cosyvoice.cli.cosyvoice import CosyVoice2
 
-logging.getLogger('multipart.multipart').setLevel(logging.INFO)
 
+logging.getLogger('multipart.multipart').setLevel(logging.INFO)
 # FastAPI 객체 생성
 app = FastAPI()
 
@@ -37,9 +40,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],  # 모든 HTTP 메서드 허용 (GET, POST 등)
     allow_headers=["*"],  # 모든 헤더 허용
-)
-
-TARGET_API_URL = "http://10.28.224.140:30981/process/" 
+) 
 
 @app.post("/sound_transfer/")
 async def speech_to_text(file: UploadFile = File(...), changed_scripts: str = Form(...)):
@@ -55,6 +56,7 @@ async def speech_to_text(file: UploadFile = File(...), changed_scripts: str = Fo
     processing_end_time = time.time()
     log_time('cosyvoice_timelog.txt' ,f"[sound_transfer] 내부 처리 시간: {processing_end_time - processing_start_time:.4f}초")
 
+    
     base64_start_time = time.time()
     encoded_results = []
     for result in results:
@@ -75,31 +77,10 @@ async def speech_to_text(file: UploadFile = File(...), changed_scripts: str = Fo
 
     # retalk 서버에 요청
     try:
-        response_start = time.time()
-
-        temp_file.seek(0)
-        whole_video_base64 = base64.b64encode(temp_file.read()).decode('utf-8')
-
-        response = requests.post(
-            TARGET_API_URL, 
-            json={
-                "output_files": encoded_results, 
-                "whole_video_base64": whole_video_base64
-            },  
-            stream=True
-        )
-
-        response_end = time.time()
-        log_time('cosyvoice_timelog.txt', f"[sound_transfer] Retalk 서버 응답 시간: {response_end - response_start:.4f}초")
-
         end_time = time.time()
         log_time('cosyvoice_timelog.txt', f"[sound_transfer] 전체 처리 시간: {end_time - start_time:.4f}초")
 
-        return Response(
-            content=response.content,
-            media_type="video/mp4",
-            headers={"Content-Disposition": "attachment; filename=final_output.mp4"}
-        )
+        return {"status": "success", "results": encoded_results}
     except requests.exceptions.RequestException as e:
         return {"status": "error", "message": str(e)}
 

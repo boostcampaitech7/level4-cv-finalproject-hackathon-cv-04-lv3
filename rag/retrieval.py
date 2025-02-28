@@ -4,11 +4,15 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from utils import get_solar_pro, get_upstage_embeddings_model, calculate_token, parse_response, preprocess_script_items
 from prompts import load_template
 from fastapi import HTTPException
+import time
+import asyncio
 
 embeddings = get_upstage_embeddings_model()
 
-def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_path: str):
+async def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_path: str):
     try:
+        # 벡터 스토어 로딩 시간 측정
+        vector_start = time.time()
         vector_store = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
         qa = RetrievalQA.from_chain_type(
             llm=get_solar_pro(llm_config['max_token'], llm_config['temperature']),
@@ -16,7 +20,10 @@ def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_pa
             retriever=vector_store.as_retriever(**retriever_config),
             return_source_documents=True
         )
+        vector_time = time.time() - vector_start
 
+        # 전처리 시간 측정
+        preprocess_start = time.time()
         input_docs = preprocess_script_items(query)
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=500,
@@ -24,29 +31,43 @@ def create_qa_chain(query: list, retriever_config: dict, llm_config: dict, db_pa
             length_function=calculate_token,
             separators=['\n']
         )
-        
         input_docs = text_splitter.split_documents(input_docs)
-        all_parsed_results = []
+        preprocess_time = time.time() - preprocess_start
+
+        all_tasks = []
+        for doc in input_docs:
+            original_text = doc.page_content
+            for template in ['rag_prompt1', 'rag_prompt2', 'rag_prompt3']:
+                prompt = load_template(template, original_text)
+                all_tasks.append(qa.ainvoke(prompt))
         
-        with open('llm_response.txt', 'w', encoding='utf-8') as f:
-            for idx, doc in enumerate(input_docs):
-                # 각각의 프롬프트로 결과 얻기
-                original_text = doc.page_content
-                for template in ['rag_prompt1', 'rag_prompt2', 'rag_prompt3']:
-                    prompt = load_template(template, original_text)
-                    response = qa.invoke(prompt)
-                    parsed_result = parse_response(response)
-                    all_parsed_results.extend(parsed_result)
+        # 모든 작업을 병렬로 실행
+        llm_start = time.time()
+        all_responses = await asyncio.gather(*all_tasks)
+        llm_time = time.time() - llm_start
+        
+        # 결과 처리
+        parsing_start = time.time()
+        all_parsed_results = []
+        for response in all_responses:
+            all_parsed_results.extend(parse_response(response))
+        parsing_time = time.time() - parsing_start
 
-                # 로그 작성
-                f.write(f"\n====== Chunk {idx + 1}/{len(input_docs)} ======\n")
-                f.write(f"Front-Text:\n{doc}\n\n")
-                f.write("------ LLM Response ------\n")
-                f.write(f"{response['result']}\n\n")
-                f.write("------ Parsed Results ------\n")
-                f.write(f"{parsed_result}\n")
-
+        # 결과 정렬 시간 측정
+        sort_start = time.time()
         all_parsed_results.sort(key=lambda x: x['start'])
+        sort_time = time.time() - sort_start
+
+        # 전체 처리 시간 출력 (LLM 시간 제외)
+        print(f"""
+        처리 시간 분석:
+        - 벡터 스토어 로딩: {vector_time:.2f}초
+        - 전처리: {preprocess_time:.2f}초
+        - 총 파싱: {parsing_time:.2f}초
+        - 결과 정렬: {sort_time:.2f}초
+        - 총 LLM 호출: {llm_time:.2f}초
+        - 총 처리 시간 (LLM 제외): {vector_time + preprocess_time + parsing_time + sort_time:.2f}초
+        """)
 
         print(all_parsed_results)
         return all_parsed_results

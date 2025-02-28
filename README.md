@@ -31,13 +31,13 @@
 # 📺 Demo 
 
 ### 데모 사진
-⚠️ 프로젝트 기간 중 가장 이슈가 된 주제를 예시로 든 것일 뿐, 시연 사진과 영상의 정치적 발언은 저희 팀과 무관함을 알립니다.⚠️ 
+⚠️ 프로젝트 기간 중 가장 이슈였던 주제를 예시로 들었으며, 시연 사진과 영상의 정치적 발언은 저희 팀과 무관함을 알립니다.⚠️ 
 <img src="https://github.com/user-attachments/assets/1e6e0483-cbc4-4bd7-a5cd-60227c679bc5" width="1000"/>
 
 
 # 📚 프로젝트 구조
 ### 시스템 아키텍쳐
-<img src="https://github.com/user-attachments/assets/53c226b7-da8f-46c2-b2aa-f2e0727c2871" width="1000"/>
+<img src="https://github.com/user-attachments/assets/dc0eb1df-a791-46a4-84ea-fbab9b6263f3" width="1000"/>
 
 # ⚙️ Requirements
 

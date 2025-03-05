@@ -1,7 +1,9 @@
 import io
 import ffmpeg
 import numpy as np
-import cv2
+import cv2    
+import tempfile
+import os
 
 def extract_audio_segment(input_file, start_time, end_time):
     start_seconds = start_time / 1000
@@ -27,15 +29,27 @@ def extract_audio_segment_memory(input_file, start_time, end_time):
     """
     비디오 특정 구간의 오디오를 메모리에서 직접 처리하여 반환 
     """
+    
     start_seconds = start_time / 1000
     duration = (end_time - start_time) / 1000
     
-    process = (
-        ffmpeg
-        .input(input_file, ss=start_seconds, t=duration)
-        .output('pipe:', format='wav', acodec='pcm_s16le', ar=16000, ac=1)
-        .run(capture_stdout=True, capture_stderr=True)
-    )
+    # BytesIO 객체를 임시 파일로 저장 (ffmpeg-python에서 BytesIO 객체를 받지 못하는 듯)
+    with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as temp_file:
+        temp_path = temp_file.name
+        input_file.seek(0)
+        temp_file.write(input_file.read())
+    
+    try:
+        # ffmpeg 명령어 실행
+        process = (
+            ffmpeg
+            .input(temp_path, ss=start_seconds, t=duration)
+            .output('pipe:', format='wav', acodec='pcm_s16le', ar=16000, ac=1)
+            .run(capture_stdout=True, capture_stderr=True)
+        )
+    finally:
+        # 임시 파일 삭제
+        os.unlink(temp_path)
     
     audio_data = io.BytesIO(process[0])
     return audio_data
@@ -62,20 +76,32 @@ def extract_video_segment(input_file, start_time, end_time):
 
 def extract_video_segment_memory(input_file, start_time, end_time):
     """
-    특정 구간의 비디오를 메모리에서 직접 처리하여 반환 (numpy 배열)
+    비디오에서 특정 구간을 메모리에 추출
     """
+    
     start_seconds = start_time / 1000
     duration = (end_time - start_time) / 1000
-
-    process = (
-        ffmpeg
-        .input(input_file, ss=start_seconds, t=duration)
-        .output('pipe:', format='rawvideo', pix_fmt='rgb24')
-        .run(capture_stdout=True, capture_stderr=True)
-    )
-
-    video_bytes = process[0]
-    return np.frombuffer(video_bytes, dtype=np.uint8) 
+    
+    with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as temp_file:
+        temp_path = temp_file.name
+        input_file.seek(0)
+        temp_file.write(input_file.read())
+    
+    try:
+        # ffmpeg 명령어 실행
+        process = (
+            ffmpeg
+            .input(temp_path, ss=start_seconds, t=duration)
+            .output('pipe:', format='mp4', movflags='frag_keyframe+empty_moov')
+            .run(capture_stdout=True, capture_stderr=True)
+        )
+    finally:
+        # 임시 파일 삭제
+        os.unlink(temp_path)
+    
+    # BytesIO 객체로 변환
+    video_data = io.BytesIO(process[0])
+    return video_data
 
 def extract_video_segment_opencv(input_file, start_time, end_time):
     """

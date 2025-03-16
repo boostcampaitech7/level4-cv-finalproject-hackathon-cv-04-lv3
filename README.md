@@ -84,4 +84,4 @@ poetry install
 </div>
 
 ## ⚡️ Detail   
-우리의 프로젝트에 대한 자세한 내용은 [Wrap-Up Report](https://github.com/boostcampaitech7/level2-cv-semanticsegmentation-cv-04-lv3/blob/main/docs/SemanticSeg_CV_%ED%8C%80%20%EB%A6%AC%ED%8F%AC%ED%8A%B8(04%EC%A1%B0).pdf)에서 확인하실 수 있습니다.
+우리의 프로젝트에 대한 자세한 내용은 [Wrap-Up Report](https://github.com/boostcampaitech7/level4-cv-finalproject-hackathon-cv-04-lv3/blob/main/docs/Warpup_Report.pdf)에서 확인하실 수 있습니다.

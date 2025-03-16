@@ -1,0 +1,33 @@
+name: "✨ Feature"
+description: "새로운 기능 추가"
+labels: ["feature"]
+body:
+  - type: textarea
+    attributes:
+      label: 📄 만들고자 하는 기능
+      description: 새로운 기능에 대한 개요를 작성해 주세요.
+      placeholder: 자세히 적을수록 좋습니다!
+    validations:
+      required: true
+  - type: textarea
+    attributes: 
+      label: 🌱 구현 내용
+      description: 할 일을 체크박스 형태로 작성해주세요.
+      placeholder: 최대한 세분화 해서 적어주세요!
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📚 참고 자료
+      description: 참고 자료가 있다면 작성해 주세요.
+  - type: textarea
+    attributes:
+      label: 📅 예상 기간
+      description: 예상 기간을 작성해 주세요.
+      placeholder: YYYY-MM-DD ~ YYYY-MM-DD 형식으로 작성해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📝 기타
+      description: 기타 사항이 있다면 작성해 주세요.
